@@ -31,7 +31,7 @@ import pdb
 # do you want to do zero mean analysis and get the mean and std per hour?
 run_zero_mean_analysis = False
 # do you want to use a nn to train?
-use_nn = True
+use_nn = False
 
 
 if not run_zero_mean_analysis:
@@ -46,7 +46,7 @@ if not run_zero_mean_analysis:
     else:
         pickle_model = True
 
-images_base_dir = "images/"
+images_base_dir = "../images/"
 
 data_table = "samplesGridData"
 
@@ -135,7 +135,7 @@ def use_existing_model():
     """
 
     Function is used if flag is set to use existing model.
-    The model is set based on the current svn or nn model available in
+    The model is set based on the current svm or nn model available in
     a pickle file in the same directory as this script.
 
     """
@@ -151,7 +151,7 @@ def use_existing_model():
     if use_nn:
         file_name = "nn_current_model"
     else:
-        file_name = "svn_current_model"
+        file_name = "svm_current_model"
 
     fileObject = open(file_name,'rb')
     pipeline = pickle.load(fileObject)

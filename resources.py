@@ -28,6 +28,10 @@ from invdisttree import Invdisttree
 
 np.set_printoptions(threshold='nan')
 
+IMAGES_BASE_DIR = "../images"
+
+
+
 #defining sensors
 STATIONARY = [2]
 NODE_OLD = [6]
@@ -282,7 +286,7 @@ def create_mean_value_grid(df):
 
 
 
-def gridify_sydney(df, heatmap_name = "images/before_interpolation_averages", verbose = True, heatmap = True):
+def gridify_sydney(df, heatmap_name = IMAGES_BASE_DIR + "/before_interpolation_averages", verbose = True, heatmap = True):
     """ Convert Sydney to a grid """
     sydney_grid, count = create_mean_value_grid(df)
 
@@ -345,8 +349,8 @@ def interpol_general(known, z, ask):
     (interpol, interpol_name) = idw_interpol(known, z, ask, len(z))
 
     print "Interpolation values: Min, max, mean and range: {0}, {1}, {2}, {3}".format(interpol.min(), interpol.max(), interpol.mean(),  interpol.max() - interpol.min())
-    create_heatmap(interpol, "images/after_" + interpol_name + "_interpolation")
-    create_mesh(interpol, "images/after_mesh_" + interpol_name + "_interpolation")
+    create_heatmap(interpol, IMAGES_BASE_DIR + "/after_" + interpol_name + "_interpolation")
+    create_mesh(interpol, IMAGES_BASE_DIR + "/after_mesh_" + interpol_name + "_interpolation")
 
     return interpol
 
@@ -400,7 +404,7 @@ def convert_to_localtime(series):
 
 def model_NN(time_start, time_end, name = "time_vs_co_averages"):
     """ Implement the NN model """
-    name = "images/" + name
+    name = IMAGES_BASE_DIR + "/" + name
     #retrieve sql data for the period required
     user_id = 7
     sql_string = """SELECT
