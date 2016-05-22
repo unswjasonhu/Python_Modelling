@@ -10,8 +10,8 @@ app = Flask(__name__)
 
 @app.route('/')
 def hello_world():
-    return "hello modelling index"
-    #return render_template('index.html')
+    #return "hello modelling index"
+    return render_template('index.html')
 
 #@app.route('/hari')
 #def hari():
