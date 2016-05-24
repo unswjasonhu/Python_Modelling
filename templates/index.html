@@ -1,13 +1,244 @@
+<!DOCTYPE html>
 <html>
-<head>
-</head>
+  <head>
+    <link rel='stylesheet' type='text/css' href='/css/main.css'>
+    <link rel="stylesheet" href="/css/jquery-ui-1.8.4.custom.css">
+    <link rel="stylesheet" href="/css/mapstyle.css">
+    <style type="text/css">
+      html, body { height: 100%; margin: 0; padding: 0; }
+      #map { height: 100%; width: 75%; }
+      #slider {
+	float: left;
+	display: inline;
+	width: 82px;
+	margin: -8px 6px 2px 6px;
+      }
+      .ui-slider .ui-slider-handle {
+	width: 8px; 
+	height: 20px;
+	margin-left: -4px;
+	margin-top: -3px;
+      }
+      /*#ui-datepicker-div {
+ 	z-index: 9999999;
+      }*/
+    </style>
 
-<body>
 
-Hello this is from modeling
+  </head>
+  <body>
+    <script src="//code.jquery.com/jquery-1.11.3.min.js"></script>
+    <script src="//code.jquery.com/jquery-migrate-1.2.1.min.js"></script>
+    <script type="text/javascript">
 
-</body>
+      var map, heatmap, marker, image;
+
+      var myLatLng = {lat: -33.92313, lng: 150.98812};
+      function initMap() {
+        map = new google.maps.Map(document.getElementById('map'), {
+          center: myLatLng,
+          zoom: 11,
+          scaleControl:true,
+        });
+
+        heatmap = new google.maps.visualization.HeatmapLayer({
+            map: map,
+            radius: 8,
+            data: getGridData()
+        });
+        heatmap.setMap(map);
+
+        image = '/images/markers/home.png';
+        marker = new google.maps.Marker({
+          position: myLatLng,
+          map: map,
+          icon: image,
+          title: 'UNSW is my home'
+        });
+      };
+
+    function getGridData() {
+        var datetime = date.value + '_' + time.value;
+        var url ='/modeling/get_estimates_data?input_datetime=' + datetime;
+        var dataPoints = []
+        $.ajax({
+            url: url,
+            dataType: 'json',
+            async: false,
+            data: "",
+            success: function(data) {
+                var array = [];
+                $.each(data, function(index, d) {
+                    array = d;
+                });
+                var heatmappoint = [];
+                //tempLat = array[0][0][0];
+                //tempLng = array[0][0][1];
+                //tempWeight = array[0][1][1];
+                //heatmappoint[0] = '{location: new google.maps.LatLng('+tempLat+','+tempLng+'), weight:'+tempWeight+'},';
+                for (k = 1; k < array.length; k++) {
+                    var tempLat = array[k][0][0];
+                    //console.log(tempLat);
+                    var tempLng = array[k][0][1];
+                    //console.log(tempLng);
+                    var tempWeight = array[k][1][1];
+                    //console.log(tempWeight);
+                    //heatmappoint[0] += '{location: new google.maps.LatLng('+tempLat+','+tempLng+'), weight:'+tempWeight+'},';
+                    //console.log(heatmappoint[0]);
+                    heatmappoint.push({location: new google.maps.LatLng(tempLat, tempLng), weight: tempWeight});
+                }
+                //tempLat = array[array.length-1][0][0];
+                //tempLng = array[array.length-1][0][1];
+                //tempWeight = array[array.length-1][1][1];
+                //heatmappoint[0] += '{location: new google.maps.LatLng('+tempLat+','+tempLng+'), weight:'+tempWeight+'}';
+                //console.log(heatmappoint[0]);
+                //heatmappoint
+                dataPoints = heatmappoint;
+                //console.log(dataPoints);
+            }
+        });
+        //console.log(dataPoints);
+        return dataPoints;
+    };
 
 
+
+    </script>
+    <script async defer
+      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCDdSncqlYOdWZsj0l-9RM9KgDCVpg4CxI&libraries=visualization&callback=initMap">
+    </script>
+    <div id="container">
+    <div style="float:left" id="map"></div>
+    <div id="inputform"><form name="input">
+        <h2>Haze Watch</h2></a>
+	<label for="lat">Latitude: </label><br />
+        <input id="lat" type="textbox" class="textclass" maxlength="22" value="-33.92313">
+	<p><label for="lng">Longitude: </label><br />
+        <input id="lng" type="textbox" class="textclass" maxlength="22" value="150.98812">
+	<img src="/images/markers/home2.png" style="vertical-align:middle;">
+	<p><label for="date">Date: </label><br />
+        <input id="date" type="textbox" class="textclass" maxlength="10" value="2015-09-11"></p>
+
+	<p><label for="time">Time: </label><br />
+        <input id="time" type="textbox" class="textclass2" maxlength="8" size="8" value="10:00:00">
+        <div id="slider"></div><br /></p>
+
+	<p><label for="pollutant">Pollutant: </label><br />
+        <select id="pollutant">
+            <option selected value = "co">CO</option>
+        </select>
+
+
+        <button type="button" id="getdata" value="checkvalue"> Submit </button>
+        <script>
+        $('#getdata').click(function () {
+            //get_chart();
+            heatmap = new google.maps.visualization.HeatmapLayer({
+                map: map,
+                radius: 8,
+                data: getGridData()
+            });
+            heatmap.setMap(map);
+            //reset the heatmap
+            var parselat = parseFloat(lat.value);
+            var parselng = parseFloat(lng.value);
+            markerlatlng = {lat: parselat, lng: parselng};
+            console.log(markerlatlng);
+            marker.setPosition(markerlatlng);
+            drawChart();
+        });
+       
+        </script>
+
+        </form>
+   </div>
+   </div>
+   <script type="text/javascript"
+          src="https://www.google.com/jsapi?autoload={
+            'modules':[{
+              'name':'visualization',
+              'version':'1',
+              'packages':['corechart']
+            }]
+          }"></script>
+
+    <script type="text/javascript">
+      google.setOnLoadCallback(drawChart);
+
+      function drawChart() {
+          var colvlArray = [];
+          var charturl = '/modeling/get_estimates_data?input_date=' + date.value +'&lat=' +lat.value + '&lon=' + lng.value;
+          console.log(charturl);
+          $.ajax({
+              url: charturl,
+              dataType: "json",
+              async: false,
+              data: "",
+              success: function(data) {
+
+                $.each(data, function(index, t){
+                    for (k=0; k<t.length; k++) {
+                        colvlArray[k] = t[k][1];
+                    }
+                    console.log(colvlArray);
+                });
+              }
+
+          }).responseText;
+          var chartdata = new google.visualization.DataTable();
+          chartdata.addColumn('string', 'Time');
+          chartdata.addColumn('number', 'CO level');
+          for (k=0; k<colvlArray.length; k++) {
+              var timeString = (k+1) +':00';
+              chartdata.addRow([timeString, colvlArray[k]]);
+          }
+
+
+          var options = {
+              title: 'Carbon Monoxide Concentration over time at '+lat.value+','+lng.value,
+              titleTextStyle: {
+                      bold: true,
+                      fontSize: 32,
+              },
+              backgroundColor: 'beige',
+              lineWidth: 4,
+              lineDashStyle: [5,2,3,2],
+              legend: {
+                  position: 'bottom'
+              },
+              hAxis: {
+                  title: 'Time',
+                  textStyle: {
+                      bold: true,
+                      fontSize: 16,
+                      color: 'red',
+                  },
+                  titleTextStyle: {
+                      bold: true,
+                      fontSize: 20,
+                      color: '#1a237e',
+                  }
+              },
+              vAxis: {
+                  title: 'CO Level',
+                  textStyle: {
+                      bold: true,
+                      fontSize: 16,
+                      color: 'red',
+                  },
+                  titleTextStyle: {
+                      bold: true,
+                      fontSize: 20,
+                      color: '#1a237e',
+                  }
+              }
+          };
+
+        var chart = new google.visualization.LineChart(document.getElementById('curve_chart'));
+
+        chart.draw(chartdata, options);
+      }
+    </script>
+    <div id="curve_chart" style="width: 900px; height: 500px"></div>
+  </body>
 </html>
-
