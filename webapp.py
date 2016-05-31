@@ -19,28 +19,40 @@ def index():
 
 @app.route('/get_estimates_data', methods = ['GET'])
 def get_estimates_data():
-    #input_datetime = request.form.get('date_time')
-    #input_date = request.form.get('date')
-    lat = float(request.args.get('lat'))
-    lon = float(request.args.get('lon'))
+    input_datetime = request.args.get('input_datetime')
+    input_date = request.args.get('input_date')
+
+    try:
+        lat = request.args.get('lat')
+        lon = request.args.get('lon')
+        if lat or lon:
+            lat = float(request.args.get('lat'))
+            lon = float(request.args.get('lon'))
+    except:
+        return jsonify({'error': 'Malformed lat or lon given given'})
+
     #lat = -33.92313
     #lon = 150.98812
 
     #print input_datetime
-    input_datetime = "2015-09-03 10:00:00"
-    
-    try:
-        time.strptime(input_datetime, "%Y-%m-%d %H:%M:%S")
-    except:
-        pass
+    #input_datetime = "2015-09-03 10:00:00"
 
-    input_date = "2015-08-05"
-    try:
-        time.strptime(input_date, "%Y-%m-%d")
-    except:
-        return jsonify({'error': 'Invalid datetime given'})
+    body=[]
+    if input_datetime:
+        try:
+            time.strptime(input_datetime, "%Y-%m-%d %H:%M:%S")
+            body = get_estimates_data_service(input_datetime=input_datetime, input_date=input_date, lat=lat, lon=lon)
+        except:
+            return jsonify({'error': 'Invalid input_datetime given'})
 
-    body = get_estimates_data_service(input_datetime, input_date, lat, lon)
+    #input_date = "2015-08-05"
+    if input_date:
+        try:
+            time.strptime(input_date, "%Y-%m-%d")
+            body = get_estimates_data_service(input_datetime=input_datetime, input_date=input_date, lat=lat, lon=lon)
+        except:
+            return jsonify({'error': 'Invalid input_date given'})
+
     return jsonify(body)
 
 app.debug=True
