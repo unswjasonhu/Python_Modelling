@@ -20,13 +20,10 @@ from sklearn.grid_search import GridSearchCV
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 from resources import data_from_db, create_mesh, classify_hour
 
-
 from resources import NW_BOUND,SW_BOUND,NE_BOUND, create_mean_value_grid
 
 import pickle
 from datetime import datetime
-
-import pdb
 
 # do you want to do zero mean analysis and get the mean and std per hour?
 run_zero_mean_analysis = False
@@ -410,7 +407,7 @@ def main():
         fileObject = open(file_name,'wb')
         pickle.dump(pipeline, fileObject)
         fileObject.close()
-    print("Pickled the model.")
+        print("Pickled the model.")
 
 
 if __name__ == "__main__":

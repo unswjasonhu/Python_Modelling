@@ -1,16 +1,20 @@
 import time
 
 from flask import Flask
-from flask import render_template, request, jsonify
+from flask import render_template, request, jsonify, send_from_directory
 
 from services.get_estimates_data import get_estimates_data_service
 
-app = Flask(__name__)
+app = Flask(__name__, static_url_path='')
 
 #@app.route('/')
 #def index():
 #    return "hello world"
 #    #return render_template('index.html')
+
+@app.route('/js/<path:path>')
+def send_js(path):
+        return send_from_directory('js', path)
 
 @app.route('/')
 def index():

@@ -48,11 +48,11 @@
         });
         heatmap.setMap(map);
 
-        image = '/images/markers/home.png';
+        home_image = '/images/markers/home.png';
         marker = new google.maps.Marker({
           position: myLatLng,
           map: map,
-          icon: image,
+          icon: home_image,
           title: 'UNSW is my home'
         });
       };
@@ -108,7 +108,9 @@
       src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCDdSncqlYOdWZsj0l-9RM9KgDCVpg4CxI&libraries=visualization&callback=initMap">
     </script>
     <div id="container">
-    <div style="float:left" id="map"></div>
+        <img id="colorBar" src="/images/colorbar-ppm10.png" style="position: absolute; top: 50px; left: 110px; z-index: 10;" data-pin-nopin="true">
+    <div style="float:left; position: relative; overflow: hidden; transform: translateZ(0px); background-color: rgb(229, 227, 223);" id="map">
+    </div>
     <div id="inputform"><form name="input">
         <h2>Haze Watch</h2></a>
 	<label for="lat">Latitude: </label><br />

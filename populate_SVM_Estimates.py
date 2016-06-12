@@ -20,8 +20,8 @@ def main():
     cursor = db.cursor()
 
     #start_date = datetime(2015,5,1)
-    start_date = datetime(2015,5,17)
-    end_date = datetime(2016,5,2)
+    start_date = datetime(2013,5,25)
+    end_date = datetime(2013,5,27)
 
 
     #log file
@@ -62,7 +62,7 @@ def main():
             #assert that more than 4 stations need to be returned
             #sometimes 8 rows are returned (duplicate records..)
             assert fixed_samples_data is not None and len(fixed_samples_data) >= 4
-        except AssertionError as aex:
+        except AssertionError:
             #print("Assertion on number of rows returned failed")
             logObject.write("No rows on {0}\n".format(start_date));
             continue
