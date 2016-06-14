@@ -28,7 +28,7 @@ from datetime import datetime
 # do you want to do zero mean analysis and get the mean and std per hour?
 run_zero_mean_analysis = False
 # do you want to use a nn to train?
-use_nn = False
+use_nn = True
 
 
 if not run_zero_mean_analysis:
@@ -390,16 +390,19 @@ def main():
     #run the below for regular model training
     # grid search is done on set of parameters (not actually a grid search)
     # the below is done for setting the scoring parameter and setting cross validation
-    gs = GridSearchCV(pipeline, param_grid = param_grid, scoring="mean_absolute_error", cv=10)
+    gs = GridSearchCV(pipeline, param_grid = param_grid, scoring="mean_squared_error", cv=10)
     gs.fit(X_train, y_train)
 
     print(gs.scorer_)
 
-    print("Mean absolute error for 10 fold cross validation is: ", -gs.best_score_ )
+    import pdb; pdb.set_trace()
+
+    print("Mean squared error for 10 fold cross validation is: ", -gs.best_score_ )
     pipeline = gs
 
     #save the model that's trained
     if pickle_model:
+        import pdb; pdb.set_trace()
         if use_nn:
             file_name = "nn_current_model"
         else:
