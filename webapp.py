@@ -1,24 +1,18 @@
 import time
 
 from flask import Flask
-from flask import render_template, request, jsonify, send_from_directory
+from flask import render_template, request, jsonify
 
-from services.get_estimates_data import get_estimates_data_service
+from services.services import get_estimates_data_service, generate_2d_plot
 
 app = Flask(__name__, static_url_path='')
 
-#@app.route('/')
-#def index():
-#    return "hello world"
-#    #return render_template('index.html')
-
-@app.route('/js/<path:path>')
-def send_js(path):
-        return send_from_directory('js', path)
+#@app.route('/js/<path:filename>')
+#def send_js(filename):
+#        return send_from_directory('static/js', filename)
 
 @app.route('/')
 def index():
-    #return "hello modelling index"
     return render_template('index.html')
 
 @app.route('/get_estimates_data', methods = ['GET'])
@@ -32,7 +26,7 @@ def get_estimates_data():
         if lat or lon:
             lat = float(request.args.get('lat'))
             lon = float(request.args.get('lon'))
-    except:
+    except ValueError:
         return jsonify({'error': 'Malformed lat or lon given given'})
 
     #lat = -33.92313
@@ -45,19 +39,38 @@ def get_estimates_data():
     if input_datetime:
         try:
             time.strptime(input_datetime, "%Y-%m-%d %H:%M:%S")
-            body = get_estimates_data_service(input_datetime=input_datetime, input_date=input_date, lat=lat, lon=lon)
-        except:
+        except ValueError:
             return jsonify({'error': 'Invalid input_datetime given'})
+        else:
+            body = get_estimates_data_service(input_datetime=input_datetime, input_date=input_date, lat=lat, lon=lon)
 
     #input_date = "2015-08-05"
     if input_date:
         try:
             time.strptime(input_date, "%Y-%m-%d")
-            body = get_estimates_data_service(input_datetime=input_datetime, input_date=input_date, lat=lat, lon=lon)
-        except:
+        except ValueError:
             return jsonify({'error': 'Invalid input_date given'})
+        else:
+            body = get_estimates_data_service(input_datetime=input_datetime, input_date=input_date, lat=lat, lon=lon)
 
     return jsonify(body)
+
+
+@app.route('/generate_plot', methods= ['GET'])
+def generate_plot():
+    input_datetime = request.args.get('input_datetime')
+
+#    if not input_datetime:
+#        return jsonify({'error': 'Malformed lat or lon given given'})
+
+    try:
+        time.strptime(input_datetime, "%Y-%m-%d %H:%M:%S")
+        #can use create create_heatmap to generate an image
+        plot_name = generate_2d_plot(input_datetime)
+    except ValueError:
+        return jsonify({'error': 'Invalid input_datetime given'})
+
+    return "{}".format(plot_name)
 
 app.debug=True
 

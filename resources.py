@@ -525,81 +525,82 @@ def model_NN(time_start, time_end, name = "time_vs_co_averages"):
     plt.close()
 
 ########################################################################
-# Main Method starts here!
+# Main starts here!
 ########################################################################
 
-test = False
+if __name__ == "__main__":
+    test = False
 
-gridify = False
-NN = False
+    gridify = False
+    NN = False
 
-if test:
-    gridify = True
-    NN = True
+    if test:
+        gridify = True
+        NN = True
 
 
-if gridify:
-    if len(sys.argv) == 2:
-        date_test_str = sys.argv[1]
-    else:
-        #date_test = datetime.datetime.now()
-        #date_test_str = date_test.strftime('%Y-%m-%d')
-        date_test_str = "2015-09-03"
-            
-    print "date used is: " + date_test_str
+    if gridify:
+        if len(sys.argv) == 2:
+            date_test_str = sys.argv[1]
+        else:
+            #date_test = datetime.datetime.now()
+            #date_test_str = date_test.strftime('%Y-%m-%d')
+            date_test_str = "2015-09-03"
+                
+        print "date used is: " + date_test_str
+
+        ############
+        #Get the spatial data for this date
+        ############
+
+        #ignore rows with no lat/lon info, and where co is NULL
+        sql_string = """SELECT 
+                            date, latitude, longitude, location_error, computed_location, location_name, user_id, group_id, device_id, co 
+                        FROM 
+                            Samples 
+                        WHERE 
+                            date LIKE "{0}%" AND (latitude IS NOT NULL AND longitude IS NOT NULL) AND (latitude <= {1} AND latitude >= {2}) AND (longitude >= {3} AND longitude <= {4}) AND co IS NOT NULL AND co <= 50;
+        """.format(date_test_str, NW_BOUND[0], SW_BOUND[0], NW_BOUND[1], NE_BOUND[1])
+
+        df_mysql = data_from_db(sql_string)
+
+
+
+        #plot a histogram of the co values
+        #create_histogram(df_mysql, "images/{0}histogram".format(date_test_str))
+
+        co_col = df_mysql["co"]
+
+        #print co_col.dtypes
+        #print "Rows with 0 are: {0}".format(len(df_mysql[df_mysql["co"] == 0]))
+        #print "Rows with CO NULL are: {0}".format(len(df_mysql[df_mysql["co"].isnull()]))
+        #print "Rows with Lat NULL are: {0}".format(len(df_mysql[df_mysql["latitude"].isnull()]))
+        #print "Rows with Lon NULL are: {0}".format(len(df_mysql[df_mysql["longitude"].isnull()]))
+        #print "Rows with erroreous values are: {0}, sanity value is:  {1}".format(len(df_mysql[df_mysql["co"] > data_sanity]), data_sanity)
+
+        print "Data from DB: Min, max and range: {0}, {1}, {2}".format(co_col.min(), co_col.max(), co_col.max() - co_col.min())
+
+        #print df_mysql.head(10)
+        #create a grid of sydney
+        known, z, ask, sydney_grid = gridify_sydney(df_mysql)
+
+        #TODO - print a series of images over 1 minute intervals
+        #minutify_data(df_mysql)
+
+        #do the interpolation
+        interpolation_grid = interpol_general(known, z, ask)
+
+        #print sydney_grid
 
     ############
-    #Get the spatial data for this date
+    # Model the NN for a particular day and time, test time is going to be 7:30AM to 10:00AM. First take a look at the averages over the minute and try to establish where this person moved over time.
     ############
-
-    #ignore rows with no lat/lon info, and where co is NULL
-    sql_string = """SELECT 
-                        date, latitude, longitude, location_error, computed_location, location_name, user_id, group_id, device_id, co 
-                    FROM 
-                        Samples 
-                    WHERE 
-                        date LIKE "{0}%" AND (latitude IS NOT NULL AND longitude IS NOT NULL) AND (latitude <= {1} AND latitude >= {2}) AND (longitude >= {3} AND longitude <= {4}) AND co IS NOT NULL AND co <= 50;
-    """.format(date_test_str, NW_BOUND[0], SW_BOUND[0], NW_BOUND[1], NE_BOUND[1])
-
-    df_mysql = data_from_db(sql_string)
-
-
-
-    #plot a histogram of the co values
-    #create_histogram(df_mysql, "images/{0}histogram".format(date_test_str))
-
-    co_col = df_mysql["co"]
-
-    #print co_col.dtypes
-    #print "Rows with 0 are: {0}".format(len(df_mysql[df_mysql["co"] == 0]))
-    #print "Rows with CO NULL are: {0}".format(len(df_mysql[df_mysql["co"].isnull()]))
-    #print "Rows with Lat NULL are: {0}".format(len(df_mysql[df_mysql["latitude"].isnull()]))
-    #print "Rows with Lon NULL are: {0}".format(len(df_mysql[df_mysql["longitude"].isnull()]))
-    #print "Rows with erroreous values are: {0}, sanity value is:  {1}".format(len(df_mysql[df_mysql["co"] > data_sanity]), data_sanity)
-
-    print "Data from DB: Min, max and range: {0}, {1}, {2}".format(co_col.min(), co_col.max(), co_col.max() - co_col.min())
-
-    #print df_mysql.head(10)
-    #create a grid of sydney
-    known, z, ask, sydney_grid = gridify_sydney(df_mysql)
-
-    #TODO - print a series of images over 1 minute intervals
-    #minutify_data(df_mysql)
-
-    #do the interpolation
-    interpolation_grid = interpol_general(known, z, ask)
-
-    #print sydney_grid
-
-############
-# Model the NN for a particular day and time, test time is going to be 7:30AM to 10:00AM. First take a look at the averages over the minute and try to establish where this person moved over time.
-############
-if NN:
-    # hard code the date_times
-    print "Modelling using NN"
-    #date_time_start = "2015-09-03 07:30"
-    #date_time_end = "2015-09-03 10:00"
-    date_time_start = "2015-09-03 10:30"
-    date_time_end = "2015-09-03 11:00"
-    name = "averages_" + date_time_start + "_" + date_time_end
-    model_NN(date_time_start, date_time_end, name)
+    if NN:
+        # hard code the date_times
+        print "Modelling using NN"
+        #date_time_start = "2015-09-03 07:30"
+        #date_time_end = "2015-09-03 10:00"
+        date_time_start = "2015-09-03 10:30"
+        date_time_end = "2015-09-03 11:00"
+        name = "averages_" + date_time_start + "_" + date_time_end
+        model_NN(date_time_start, date_time_end, name)

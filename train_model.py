@@ -36,7 +36,7 @@ if not run_zero_mean_analysis:
     # do you want to run the hour simplification feature?
     use_hour_simplification_feature = True
     # do you want to run an existing model for nn or svm
-    run_existing_model = True
+    run_existing_model = False
 
     if run_existing_model:
         pickle_model = False
@@ -46,6 +46,10 @@ if not run_zero_mean_analysis:
 images_base_dir = "../images/"
 
 data_table = "samplesGridData"
+
+
+run_existing_model = False
+pickle_model = False
 
 
 def zero_mean_analysis():
@@ -397,7 +401,7 @@ def main():
 
     import pdb; pdb.set_trace()
 
-    print("Mean squared error for 10 fold cross validation is: ", -gs.best_score_ )
+    print("Mean squared score for 10 fold cross validation is: ", -gs.best_score_ )
     pipeline = gs
 
     #save the model that's trained

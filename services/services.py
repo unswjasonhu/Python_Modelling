@@ -1,20 +1,19 @@
 #!/usr/bin/python
 from __future__ import division
 
-#enable traceback error report
-# import cgi, cgitb; cgitb.enable()
-
-from flask import jsonify
 import sys, os, inspect
 
+import numpy as np
 import MySQLdb
 
 # realpath() will make your script run, even if you symlink it :) 
 cmd_folder = os.path.realpath(os.path.abspath(os.path.split(inspect.getfile( inspect.currentframe() ))[0]))
 
-#print cmd_folder
+# print cmd_folder
 if cmd_folder not in sys.path:
     sys.path.insert(0, cmd_folder)
+
+print sys.path
 
 # use this if you want to include modules from a subfolder
 cmd_subfolder = os.path.realpath(os.path.abspath(os.path.join(os.path.split(inspect.getfile( inspect.currentframe() ))[0],"comp4335")))
@@ -22,20 +21,20 @@ if cmd_subfolder not in sys.path:
     #print cmd_subfolder
     sys.path.insert(0, cmd_subfolder)
 
-#remember to update this appropriately
-from resources import get_index, get_coords_sydney
-import numpy as np
+# add this if run as a script for resources
+if __name__ == "__main__":
+    src_folder = os.path.abspath(os.path.join(cmd_folder, os.pardir))
+    sys.path.insert(0, src_folder)
 
-[NW_BOUND,SW_BOUND,NE_BOUND,SE_BOUND] = [(-33.728545, 150.849275), (-33.982863, 150.849275), (-33.728545, 151.24753), (-33.982863, 151.24753)]
+from resources import get_index, get_coords_sydney, create_heatmap
+# from resources import NW_BOUND,SW_BOUND,NE_BOUND,SE_BOUND
 
 estimates_table = "SVMEstimates"
 
-def get_estimates_data_service(input_datetime=None, input_date=None, lat=None, lon=None):
-    # store form fields
-    # form = cgi.FieldStorage()
-    # input_datetime = form.getvalue('input_datetime')
-    # input_date = form.getvalue('input_date')
+IMAGES_DIR = "../statis/images/"
 
+
+def get_estimates_data_service(input_datetime=None, input_date=None, lat=None, lon=None):
     db = MySQLdb.connect("localhost","pollution","pollution","pollution_monitoring" )
 
     # prepare a cursor object using cursor() method
@@ -54,10 +53,14 @@ def get_estimates_data_service(input_datetime=None, input_date=None, lat=None, l
             raise Exception("Error in : ", sql_str)
 
         results = cursor.fetchall()
-        results = [(row[0], row[1], float(row[2])) for row in results]
-        results = zip(coords, results)
-        #print results
-        results = {input_datetime : results}
+
+        if len(results) == 0:
+            results = {"error":"no results found for datetime input. Please check your input again"}
+        else:
+            results = [(row[0], row[1], float(row[2])) for row in results]
+            results = zip(coords, results)
+            #print results
+            results = {input_datetime : results}
     elif input_date and lat and lon:
         #http://162.222.176.235/modeling/get_estimates_data?input_date=2015-09-11&lat=-33.92313&lon=150.98812
         #if this is slow, it's an index problem
@@ -72,7 +75,20 @@ def get_estimates_data_service(input_datetime=None, input_date=None, lat=None, l
         results = cursor.fetchall()
         results = {input_date : [(row[0], float(row[1])) for row in results], "grid_location_row": grid_location_row, "grid_location_col": grid_location_col}
     else:
-        results = {"error":"no output given the provided input. Please check your input again"}
+        results = {"error":"no output given the provided input parameters. Please check your input again"}
 
     return results
 
+
+def generate_2d_plot(input_datetime):
+    data = get_estimates_data_service(input_datetime=input_datetime)
+    image_name = IMAGES_DIR + "random.png"
+    #heatmap is created with interpolated values
+    plot = create_heatmap(data, image_name)
+    return image_name
+
+if __name__ == "__main__":
+    src_folder = os.path.abspath(os.path.join(cmd_folder, os.pardir))
+    sys.path.insert(0, src_folder)
+    input_datetime="2015-09-10 10:00:00"
+    generate_2d_plot(input_datetime)
