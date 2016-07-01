@@ -22,7 +22,7 @@ from sknn.mlp import Regressor, Layer
 from sklearn.pipeline import Pipeline
 from sklearn.cross_validation import train_test_split
 from sklearn import preprocessing
-from sklearn.grid_search import GridSearchCV, RandomizedSearchCV
+from sklearn.grid_search import GridSearchCV
 
 from invdisttree import Invdisttree
 
@@ -209,7 +209,7 @@ def create_mesh(grid, name, title_name='interpolated', plane =True):
     plt.close()
 
 
-def create_heatmap(grid, name):
+def create_heatmap(grid, name, strip=False):
     """ Create heatmap given a grid, save it with the name provided"""
     x,y = range(GRID_RES), range(GRID_RES)
     #setup the 2D grid with Numpy
@@ -219,11 +219,18 @@ def create_heatmap(grid, name):
     intensity = np.array(grid)
     #print np.nanmax(intensity)
     Zm = ma.array(intensity,mask=np.isnan(intensity))
-    plt.pcolormesh(x, y, Zm)
     #now just plug the data into pcolormesh, it's that easy!
     #plt.pcolormesh(x, y, intensity)
-    plt.colorbar() #need a colorbar to show the intensity scale
-    plt.savefig('{0}.png'.format(name))
+    if strip:
+        fig = plt.figure(frameon=False)
+        ax = fig.add_axes([0, 0, 1, 1])
+        ax.axis('off')
+        plt.pcolormesh(x, y, Zm)
+        fig.canvas.print_png('{0}.png'.format(name), bbox_inches='tight')
+    else:
+        plt.pcolormesh(x, y, Zm)
+        plt.colorbar() #need a colorbar to show the intensity scale
+        plt.savefig('{0}.png'.format(name))
     plt.close()
 
 def idw_interpol(known, z, ask, Nnear=8):

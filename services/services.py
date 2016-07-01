@@ -2,7 +2,6 @@
 from __future__ import division
 
 import sys, os, inspect
-
 import numpy as np
 import MySQLdb
 
@@ -12,8 +11,6 @@ cmd_folder = os.path.realpath(os.path.abspath(os.path.split(inspect.getfile( ins
 # print cmd_folder
 if cmd_folder not in sys.path:
     sys.path.insert(0, cmd_folder)
-
-print sys.path
 
 # use this if you want to include modules from a subfolder
 cmd_subfolder = os.path.realpath(os.path.abspath(os.path.join(os.path.split(inspect.getfile( inspect.currentframe() ))[0],"comp4335")))
@@ -30,8 +27,8 @@ from resources import get_index, get_coords_sydney, create_heatmap
 # from resources import NW_BOUND,SW_BOUND,NE_BOUND,SE_BOUND
 
 estimates_table = "SVMEstimates"
-
-IMAGES_DIR = "../statis/images/"
+SERVICES_DIR = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+IMAGES_DIR = os.path.join(SERVICES_DIR, "static/heatmap_images/")
 
 
 def get_estimates_data_service(input_datetime=None, input_date=None, lat=None, lon=None):
@@ -81,10 +78,28 @@ def get_estimates_data_service(input_datetime=None, input_date=None, lat=None, l
 
 
 def generate_2d_plot(input_datetime):
-    data = get_estimates_data_service(input_datetime=input_datetime)
-    image_name = IMAGES_DIR + "random.png"
+    results = get_estimates_data_service(input_datetime=input_datetime)
+    image_name = os.path.join(IMAGES_DIR, input_datetime)
+
+    if not len(results.values()):
+        return {"error":"no results given for data. Please check your input again"}
+
+    data = results.values()[0]
+
+    sydney_grid = np.zeros((100,100))
+
+    for _, t in data:
+        row, col, val = t
+        sydney_grid[row][col] = val
+
+    #delete old image, the dir should have no less than 10
+    images = sorted([image for image in os.listdir(IMAGES_DIR) if '.png' in image])
+    if len(images) > 10:
+        #delete an arbitrary image here
+        os.remove(os.path.join(IMAGES_DIR,images[0]))
+
     #heatmap is created with interpolated values
-    plot = create_heatmap(data, image_name)
+    create_heatmap(sydney_grid, image_name, strip=True)
     return image_name
 
 if __name__ == "__main__":
