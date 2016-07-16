@@ -19,91 +19,12 @@
 	margin-left: -4px;
 	margin-top: -3px;
       }
-      /*#ui-datepicker-div {
- 	z-index: 9999999;
-      }*/
     </style>
-
 
   </head>
   <body>
-    <script src="//code.jquery.com/jquery-1.11.3.min.js"></script>
-    <script src="//code.jquery.com/jquery-migrate-1.2.1.min.js"></script>
-    <script type="text/javascript">
-
-      var map, heatmap, marker, image;
-
-      var myLatLng = {lat: -33.92313, lng: 150.98812};
-      function initMap() {
-        map = new google.maps.Map(document.getElementById('map'), {
-          center: myLatLng,
-          zoom: 11,
-          scaleControl:true,
-        });
-
-        heatmap = new google.maps.visualization.HeatmapLayer({
-            map: map,
-            radius: 8,
-            data: getGridData()
-        });
-        heatmap.setMap(map);
-
-        home_image = '/images/markers/home.png';
-        marker = new google.maps.Marker({
-          position: myLatLng,
-          map: map,
-          icon: home_image,
-          title: 'UNSW is my home'
-        });
-      };
-
-    function getGridData() {
-        var datetime = date.value + '_' + time.value;
-        var url ='/modeling/get_estimates_data?input_datetime=' + datetime;
-        var dataPoints = []
-        $.ajax({
-            url: url,
-            dataType: 'json',
-            async: false,
-            data: "",
-            success: function(data) {
-                var array = [];
-                $.each(data, function(index, d) {
-                    array = d;
-                });
-                var heatmappoint = [];
-                //tempLat = array[0][0][0];
-                //tempLng = array[0][0][1];
-                //tempWeight = array[0][1][1];
-                //heatmappoint[0] = '{location: new google.maps.LatLng('+tempLat+','+tempLng+'), weight:'+tempWeight+'},';
-                for (k = 1; k < array.length; k++) {
-                    var tempLat = array[k][0][0];
-                    //console.log(tempLat);
-                    var tempLng = array[k][0][1];
-                    //console.log(tempLng);
-                    var tempWeight = array[k][1][1];
-                    //console.log(tempWeight);
-                    //heatmappoint[0] += '{location: new google.maps.LatLng('+tempLat+','+tempLng+'), weight:'+tempWeight+'},';
-                    //console.log(heatmappoint[0]);
-                    heatmappoint.push({location: new google.maps.LatLng(tempLat, tempLng), weight: tempWeight});
-                }
-                //tempLat = array[array.length-1][0][0];
-                //tempLng = array[array.length-1][0][1];
-                //tempWeight = array[array.length-1][1][1];
-                //heatmappoint[0] += '{location: new google.maps.LatLng('+tempLat+','+tempLng+'), weight:'+tempWeight+'}';
-                //console.log(heatmappoint[0]);
-                //heatmappoint
-                dataPoints = heatmappoint;
-                //console.log(dataPoints);
-            }
-        });
-        //console.log(dataPoints);
-        return dataPoints;
-    };
-
-
-
-    </script>
+    <script   src="https://code.jquery.com/jquery-2.2.4.min.js"   integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44="   crossorigin="anonymous"></script>
+    <script src="/modeling/static/js/custom.js"></script>
     <script async defer
       src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCDdSncqlYOdWZsj0l-9RM9KgDCVpg4CxI&libraries=visualization&callback=initMap">
     </script>
@@ -130,27 +51,31 @@
             <option selected value = "co">CO</option>
         </select>
 
-
         <button type="button" id="getdata" value="checkvalue"> Submit </button>
+
         <script>
         $('#getdata').click(function () {
+            console.log("setting plot url ", plotUrl)
+            plotUrl = getPlotUrl()
+            $('#test_img').attr("src",plotUrl)
             //get_chart();
-            heatmap = new google.maps.visualization.HeatmapLayer({
-                map: map,
-                radius: 8,
-                data: getGridData()
-            });
-            heatmap.setMap(map);
+            //heatmap = new google.maps.visualization.HeatmapLayer({
+            //    map: map,
+            //    radius: 8,
+            //    data: getGridData()
+            //});
+            //heatmap.setMap(map);
             //reset the heatmap
             var parselat = parseFloat(lat.value);
             var parselng = parseFloat(lng.value);
             markerlatlng = {lat: parselat, lng: parselng};
             console.log(markerlatlng);
             marker.setPosition(markerlatlng);
+            console.log('Drawing CO chart')
             drawChart();
         });
-       
         </script>
+
 
         </form>
    </div>
@@ -166,81 +91,8 @@
 
     <script type="text/javascript">
       google.setOnLoadCallback(drawChart);
-
-      function drawChart() {
-          var colvlArray = [];
-          var charturl = '/modeling/get_estimates_data?input_date=' + date.value +'&lat=' +lat.value + '&lon=' + lng.value;
-          console.log(charturl);
-          $.ajax({
-              url: charturl,
-              dataType: "json",
-              async: false,
-              data: "",
-              success: function(data) {
-
-                $.each(data, function(index, t){
-                    for (k=0; k<t.length; k++) {
-                        colvlArray[k] = t[k][1];
-                    }
-                    console.log(colvlArray);
-                });
-              }
-
-          }).responseText;
-          var chartdata = new google.visualization.DataTable();
-          chartdata.addColumn('string', 'Time');
-          chartdata.addColumn('number', 'CO level');
-          for (k=0; k<colvlArray.length; k++) {
-              var timeString = (k+1) +':00';
-              chartdata.addRow([timeString, colvlArray[k]]);
-          }
-
-
-          var options = {
-              title: 'Carbon Monoxide Concentration over time at '+lat.value+','+lng.value,
-              titleTextStyle: {
-                      bold: true,
-                      fontSize: 32,
-              },
-              backgroundColor: 'beige',
-              lineWidth: 4,
-              lineDashStyle: [5,2,3,2],
-              legend: {
-                  position: 'bottom'
-              },
-              hAxis: {
-                  title: 'Time',
-                  textStyle: {
-                      bold: true,
-                      fontSize: 16,
-                      color: 'red',
-                  },
-                  titleTextStyle: {
-                      bold: true,
-                      fontSize: 20,
-                      color: '#1a237e',
-                  }
-              },
-              vAxis: {
-                  title: 'CO Level',
-                  textStyle: {
-                      bold: true,
-                      fontSize: 16,
-                      color: 'red',
-                  },
-                  titleTextStyle: {
-                      bold: true,
-                      fontSize: 20,
-                      color: '#1a237e',
-                  }
-              }
-          };
-
-        var chart = new google.visualization.LineChart(document.getElementById('curve_chart'));
-
-        chart.draw(chartdata, options);
-      }
     </script>
+    <img id="test_img" src="" style="width: 900px; height: 500px">
     <div id="curve_chart" style="width: 900px; height: 500px"></div>
   </body>
 </html>

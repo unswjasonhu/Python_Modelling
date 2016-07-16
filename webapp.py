@@ -2,6 +2,8 @@ import time
 
 from flask import Flask
 from flask import render_template, request, jsonify
+import re
+import urllib
 
 from services.services import get_estimates_data_service, generate_2d_plot
 
@@ -69,8 +71,15 @@ def generate_plot():
         plot_name = generate_2d_plot(input_datetime)
     except ValueError:
         return jsonify({'error': 'Invalid input_datetime given'})
+    plot_name = "{}.png".format(plot_name)
 
-    return "{}".format(plot_name)
+    try:
+        url = re.search(r'static.*png', plot_name).group()
+    except:
+        return jsonify({'error': 'Invalid output returned'})
+
+    url = urllib.quote('/modeling/' + url)
+    return jsonify({'success': url})
 
 app.debug=True
 
