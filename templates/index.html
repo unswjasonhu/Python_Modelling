@@ -24,9 +24,31 @@
   </head>
   <body>
     <script   src="https://code.jquery.com/jquery-2.2.4.min.js"   integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44="   crossorigin="anonymous"></script>
-    <script src="/modeling/static/js/custom.js"></script>
     <script async defer
-      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCDdSncqlYOdWZsj0l-9RM9KgDCVpg4CxI&libraries=visualization&callback=initMap">
+      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCDdSncqlYOdWZsj0l-9RM9KgDCVpg4CxI&libraries=visualization>
+    </script>
+    <script src="/modeling/static/js/custom.js"></script>
+    <script>
+        var overlay;
+        EstimatesOverlay.prototype = new google.maps.OverlayView();
+
+        /** @constructor */
+        function EstimatesOverlay(bounds, image, map) {
+
+          // Initialize all properties.
+          this.bounds_ = bounds;
+          this.image_ = image;
+          this.map_ = map;
+
+          // Define a property to hold the image's div. We'll
+          // actually create this div upon receipt of the onAdd()
+          // method so we'll leave it null for now.
+          this.div_ = null;
+
+          // Explicitly call setMap on this overlay.
+          this.setMap(map);
+        }
+        google.maps.event.addDomListener(window, 'load', initMap);
     </script>
     <div id="container">
         <img id="colorBar" src="/images/colorbar-ppm10.png" style="position: absolute; top: 50px; left: 110px; z-index: 10;" data-pin-nopin="true">
@@ -55,8 +77,8 @@
 
         <script>
         $('#getdata').click(function () {
-            console.log("setting plot url ", plotUrl)
             plotUrl = getPlotUrl()
+            console.log("setting plot url ", plotUrl)
             $('#test_img').attr("src",plotUrl)
             //get_chart();
             //heatmap = new google.maps.visualization.HeatmapLayer({
@@ -90,7 +112,7 @@
           }"></script>
 
     <script type="text/javascript">
-      google.setOnLoadCallback(drawChart);
+    //  google.setOnLoadCallback(drawChart);
     </script>
     <img id="test_img" src="" style="width: 900px; height: 500px">
     <div id="curve_chart" style="width: 900px; height: 500px"></div>
