@@ -7,6 +7,7 @@ import time
 
 import MySQLdb
 import pandas as pd
+import pylab as pl
 import numpy as np
 import numpy.ma as ma
 #from scipy.spatial import cKDTree as KDTree
@@ -227,6 +228,13 @@ def create_heatmap(grid, name, strip=False):
         ax.axis('off')
         plt.pcolormesh(x, y, Zm)
         fig.canvas.print_png('{0}.png'.format(name), bbox_inches='tight')
+
+        fig = pl.figure(figsize=(9, 1.5), frameon=False)
+        pl.imshow(Zm)
+        pl.gca().set_visible(False)
+        pl.colorbar(orientation="vertical")
+        fig.canvas.print_png('{0}_colorbar.png'.format(name), bbox_inches='tight')
+
     else:
         plt.pcolormesh(x, y, Zm)
         plt.colorbar() #need a colorbar to show the intensity scale
