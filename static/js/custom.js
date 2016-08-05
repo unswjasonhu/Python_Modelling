@@ -1,4 +1,4 @@
-var map, heatmap, marker, image;
+var map, heatmap, image;
 
 
 function getPlotUrl() {
@@ -16,12 +16,13 @@ function getPlotUrl() {
         }
     });
     return plotUrl;
-}
+};
 
 function getGridData() {
     var datetime = date.value + '_' + time.value;
     var url ='/modeling/get_estimates_data?input_datetime=' + datetime;
     var dataPoints = []
+    var values = [];
     $.ajax({
         url: url,
         dataType: 'json',
@@ -40,11 +41,13 @@ function getGridData() {
                 //console.log(tempLng);
                 var tempWeight = array[k][1][1];
                 heatmappoint.push({location: new google.maps.LatLng(tempLat, tempLng), weight: tempWeight});
+                values.push(tempWeight);
             }
             dataPoints = heatmappoint;
             //console.log(dataPoints);
         }
     });
+    //console.log('Max is ', Math.max.apply(null, values), ', Min is ', Math.min.apply(null, values));
     //console.log(dataPoints);
     return dataPoints;
 };

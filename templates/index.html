@@ -6,32 +6,73 @@
     <link rel="stylesheet" href="/css/mapstyle.css">
     <style type="text/css">
       html, body { height: 100%; margin: 0; padding: 0; }
-      #map { height: 100%; width: 75%; }
-      #slider {
-	float: left;
-	display: inline;
-	width: 82px;
-	margin: -8px 6px 2px 6px;
-      }
-      .ui-slider .ui-slider-handle {
-	width: 8px; 
-	height: 20px;
-	margin-left: -4px;
-	margin-top: -3px;
-      }
+    #slider {
+        float: left;
+        display: inline;
+        width: 82px;
+        margin: -8px 6px 2px 6px;
+    }
+    .ui-slider .ui-slider-handle {
+        width: 8px; 
+        height: 20px;
+        margin-left: -4px;
+        margin-top: -3px;
+    }
+    #mask {
+        position: relative;
+        top: 0;
+        left: 0;
+        height: 100%;;
+        width: 100%;
+        background: url('/modeling/static/images/imagemask.png') no-repeat;
+    }
+    #map {
+        float:left; 
+        position: relative; 
+        height: 100%;
+        width: 75%;
+        overflow: hidden; 
+        transform: translateZ(0px); 
+        background-color: rgb(229, 227, 223);
+    }
+    #colorbar {
+        position: absolute; 
+        top: 50px; 
+        left: 110px; 
+        z-index: 10;"
+    }
     </style>
 
   </head>
   <body>
-    <script   src="https://code.jquery.com/jquery-2.2.4.min.js"   integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44="   crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/jquery-2.2.4.min.js"   integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44="   crossorigin="anonymous"></script>
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCDdSncqlYOdWZsj0l-9RM9KgDCVpg4CxI">
     </script>
     <script src="/modeling/static/js/custom.js"></script>
     <script>
+        var hostname = "http://162.222.176.235/";
         var overlay;
+        var marker;
+
         EstimatesOverlay.prototype = new google.maps.OverlayView();
 
         var myLatLng = {lat: -33.92313, lng: 150.98812};
+
+        function setOverlay(map) {
+          // Overlay parameters
+          //[NW_BOUND,SW_BOUND,NE_BOUND,SE_BOUND] = [(-33.728545, 150.849275), (-33.982863, 150.849275), (-33.728545, 151.24753), (-33.982863, 151.24753)].
+          var bounds = new google.maps.LatLngBounds(
+            //SW
+            new google.maps.LatLng(-33.982863, 150.849275),
+            //NE
+            new google.maps.LatLng(-33.728545, 151.24753)
+          );
+
+          var srcImage = hostname + getPlotUrl();
+
+          console.log("src image is", srcImage)
+          overlay = new EstimatesOverlay(bounds, srcImage, map);
+        }
 
         function initMap() {
           var map = new google.maps.Map(document.getElementById('map'), {
@@ -40,31 +81,30 @@
             scaleControl:true,
           });
 
-          // Overlay parameters
-          //[NW_BOUND,SW_BOUND,NE_BOUND,SE_BOUND] = [(-33.728545, 150.849275), (-33.982863, 150.849275), (-33.728545, 151.24753), (-33.982863, 151.24753)].
-          var bounds = new google.maps.LatLngBounds(
-            //SW
-            new google.maps.LatLng(-33.982863, 150.849275),
-            //NE
-            new google.maps.LatLng(-33.728545, 151.24753));
+          drawChart();
+          setOverlay(map);
 
-          var srcImage = "http://162.222.176.235/" + getPlotUrl();
-          var colorbarImage = srcImage.substring(0, srcImage.length-4) + '_colorbar.png';
-
-          console.log("src image is", srcImage)
+          var colorbarImage = hostname + '/images/colorbar-ppm10.png';
           console.log("colorbar image is", colorbarImage)
-          overlay = new EstimatesOverlay(bounds, srcImage, map);
           $("#colorbar").attr("src", colorbarImage);
-
-          drawChart()
 
           //home marker params
           home_image = '/images/markers/home.png';
           marker = new google.maps.Marker({
             position: myLatLng,
             map: map,
+            draggable: true,
             icon: home_image,
             title: 'UNSW is my home'
+          });
+          google.maps.event.addListener(marker,'dragend',function(event) {
+              markerlatlng = {lat: marker.getPosition().lat(), lng: marker.getPosition().lng()};
+              var lat = Number(Math.round(markerlatlng['lat']+'e5')+'e-5'); 
+              var lng = Number(Math.round(markerlatlng['lng']+'e5')+'e-5'); 
+              $('#lat').val(lat);
+              $('#lng').val(lng);
+
+              //marker.setPosition(markerlatlng);
           });
         }
 
@@ -143,9 +183,9 @@
         google.maps.event.addDomListener(window, 'load', initMap);
     </script>
     <div id="container">
-        <img id="colorbar" src="" style="position: absolute; top: 50px; left: 110px; z-index: 10;" data-pin-nopin="true">
-        <div style="float:left; position: relative; overflow: hidden; transform: translateZ(0px); background-color: rgb(229, 227, 223);" id="map">
-        </div>
+        <img id="colorbar" src="" data-pin-nopin="true">
+        <div id="map"></div>
+        <!-- <div id="mask"></div> -->
         <div id="inputform">
             <form name="input">
             <h2>Haze Watch</h2></a>
@@ -179,7 +219,9 @@
                     marker.setPosition(markerlatlng);
                     //console.log('Drawing CO chart')
                     drawChart();
-                    initMap()
+
+                    setOverlay(map);
+                    //initMap();
                 });
                 </script>
             </form>

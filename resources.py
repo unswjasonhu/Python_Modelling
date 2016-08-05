@@ -226,14 +226,15 @@ def create_heatmap(grid, name, strip=False):
         fig = plt.figure(frameon=False)
         ax = fig.add_axes([0, 0, 1, 1])
         ax.axis('off')
-        plt.pcolormesh(x, y, Zm)
+        plt.pcolormesh(x, y, Zm, vmin=0, vmax=10)
         fig.canvas.print_png('{0}.png'.format(name), bbox_inches='tight')
 
-        fig = pl.figure(figsize=(9, 1.5), frameon=False)
-        pl.imshow(Zm)
-        pl.gca().set_visible(False)
-        pl.colorbar(orientation="vertical")
-        fig.canvas.print_png('{0}_colorbar.png'.format(name), bbox_inches='tight')
+        # Colorbar section
+        #fig = pl.figure(figsize=(9, 1.5), frameon=False)
+        #pl.imshow(Zm)
+        #pl.gca().set_visible(False)
+        #pl.colorbar(orientation="vertical")
+        #fig.canvas.print_png('{0}_colorbar.png'.format(name), bbox_inches='tight')
 
     else:
         plt.pcolormesh(x, y, Zm)

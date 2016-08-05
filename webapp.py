@@ -62,9 +62,6 @@ def get_estimates_data():
 def generate_plot():
     input_datetime = request.args.get('input_datetime')
 
-#    if not input_datetime:
-#        return jsonify({'error': 'Malformed lat or lon given given'})
-
     try:
         time.strptime(input_datetime, "%Y-%m-%d %H:%M:%S")
         #can use create create_heatmap to generate an image
@@ -81,8 +78,8 @@ def generate_plot():
     url = urllib.quote('/modeling/' + url)
     return jsonify({'success': url})
 
-app.debug=True
+app.debug=False
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=False)
 
