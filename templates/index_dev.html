@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <link rel='stylesheet' type='text/css' href='/css/main.css'>
+  <link rel="stylesheet" href="/css/jquery-ui-1.8.4.custom.css">
+  <link rel="stylesheet" href="/css/mapstyle.css">
+  <style type="text/css">
+  .container {
+    height:100%;
+  }
+  #map {
+    margin:0;
+    padding:0;
+    height: 100%;
+  }
+  #colorbar {
+    position: absolute; 
+    top: 50px; 
+    left: 110px; 
+    z-index: 10;"
+  }
+  </style>
+  <!-- Latest compiled and minified CSS -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+
+
+  </head>
+  <body>
+    <div class="container">
+      <script src="https://code.jquery.com/jquery-2.2.4.min.js"   integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44="   crossorigin="anonymous"></script>
+      <!-- Latest compiled and minified JavaScript -->
+      <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+      <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCDdSncqlYOdWZsj0l-9RM9KgDCVpg4CxI">
+      </script>
+      <script src="/modeling/static/js/custom.js"></script>
+      <script>
+        var hostname = "http://162.222.176.235/";
+        var overlay;
+        var marker;
+
+        EstimatesOverlay.prototype = new google.maps.OverlayView();
+
+        var myLatLng = {lat: -33.92313, lng: 150.98812};
+
+        function setOverlay(map) {
+          // Overlay parameters
+          //[NW_BOUND,SW_BOUND,NE_BOUND,SE_BOUND] = [(-33.728545, 150.849275), (-33.982863, 150.849275), (-33.728545, 151.24753), (-33.982863, 151.24753)].
+          var bounds = new google.maps.LatLngBounds(
+          //SW
+          new google.maps.LatLng(-33.982863, 150.849275),
+          //NE
+          new google.maps.LatLng(-33.728545, 151.24753)
+          );
+
+          var srcImage = hostname + getPlotUrl();
+
+          console.log("src image is", srcImage)
+          overlay = new EstimatesOverlay(bounds, srcImage, map);
+        }
+
+        function initMap() {
+          var map = new google.maps.Map(document.getElementById('map'), {
+          center: myLatLng,
+          zoom: 11,
+          scaleControl:true,
+          });
+
+          drawChart();
+          setOverlay(map);
+
+          var colorbarImage = hostname + '/images/colorbar-ppm10.png';
+          console.log("colorbar image is", colorbarImage)
+          $("#colorbar").attr("src", colorbarImage);
+
+          //home marker params
+          home_image = '/images/markers/home.png';
+          marker = new google.maps.Marker({
+          position: myLatLng,
+          map: map,
+          draggable: true,
+          icon: home_image,
+          title: 'UNSW is my home'
+          });
+          google.maps.event.addListener(marker,'dragend',function(event) {
+            markerlatlng = {lat: marker.getPosition().lat(), lng: marker.getPosition().lng()};
+            var lat = Number(Math.round(markerlatlng['lat']+'e5')+'e-5'); 
+            var lng = Number(Math.round(markerlatlng['lng']+'e5')+'e-5'); 
+            $('#lat').val(lat);
+            $('#lng').val(lng);
+
+            //marker.setPosition(markerlatlng);
+          });
+        }
+
+        /** @constructor */
+        function EstimatesOverlay(bounds, image, map) {
+
+          // Initialize all properties.
+          this.bounds_ = bounds;
+          this.image_ = image;
+          this.map_ = map;
+
+          // Define a property to hold the image's div. We'll
+          // actually create this div upon receipt of the onAdd()
+          // method so we'll leave it null for now.
+          this.div_ = null;
+
+          // Explicitly call setMap on this overlay.
+          this.setMap(map);
+        };
+
+        /**
+         * onAdd is called when the map's panes are ready and the overlay has been
+         * added to the map.
+         */
+        EstimatesOverlay.prototype.onAdd = function() {
+
+          var div = document.createElement('div');
+          div.style.borderStyle = 'none';
+          div.style.borderWidth = '0px';
+          div.style.position = 'absolute';
+
+          // Create the img element and attach it to the div.
+          var img = document.createElement('img');
+          img.src = this.image_;
+          img.style.width = '100%';
+          img.style.height = '100%';
+          img.style.opacity = 0.5;
+          img.style.position = 'absolute';
+          div.appendChild(img);
+
+          this.div_ = div;
+
+          // Add the element to the "overlayLayer" pane.
+          var panes = this.getPanes();
+          panes.overlayLayer.appendChild(div);
+        };
+
+        EstimatesOverlay.prototype.draw = function() {
+
+          // We use the south-west and north-east
+          // coordinates of the overlay to peg it to the correct position and size.
+          // To do this, we need to retrieve the projection from the overlay.
+          var overlayProjection = this.getProjection();
+
+          // Retrieve the south-west and north-east coordinates of this overlay
+          // in LatLngs and convert them to pixel coordinates.
+          // We'll use these coordinates to resize the div.
+          var sw = overlayProjection.fromLatLngToDivPixel(this.bounds_.getSouthWest());
+          var ne = overlayProjection.fromLatLngToDivPixel(this.bounds_.getNorthEast());
+
+          // Resize the image's div to fit the indicated dimensions.
+          var div = this.div_;
+          div.style.left = sw.x + 'px';
+          div.style.top = ne.y + 'px';
+          div.style.width = (ne.x - sw.x) + 'px';
+          div.style.height = (sw.y - ne.y) + 'px';
+        };
+
+        // The onRemove() method will be called automatically from the API if
+        // we ever set the overlay's map property to 'null'.
+        EstimatesOverlay.prototype.onRemove = function() {
+          this.div_.parentNode.removeChild(this.div_);
+          this.div_ = null;
+        };
+
+        google.maps.event.addDomListener(window, 'load', initMap);
+      </script>
+
+      <div class="row" style="height:75%">
+        <div class="col-md-8" style="height:100%">
+            <img id="colorbar" src="" data-pin-nopin="true">
+            <div id="map"></div>
+            <!-- <div id="mask"></div> -->
+        </div>
+        <div class="col-md-4" style="height:100%">
+            <div id="inputform">
+              <form name="input">
+                <label for="lat">Latitude: </label>
+                <input id="lat" type="textbox" class="textclass" maxlength="22" value="-33.92313">
+                <label for="lng">Longitude: </label>
+                <input id="lng" type="textbox" class="textclass" maxlength="22" value="150.98812">
+                <img src="/images/markers/home2.png" style="vertical-align:middle;">
+                <label for="date">Date: </label>
+                <input id="date" type="textbox" class="textclass" maxlength="10" value="2015-09-11"></p>
+
+                <label for="time">Time: </label>
+                <input id="time" type="textbox" class="textclass2" maxlength="8" size="8" value="10:00:00">
+
+                <label for="pollutant">Pollutant: </label>
+                <select id="pollutant">
+                  <option selected value = "co">CO</option>
+                </select>
+
+                <button type="button" id="getdata" value="checkvalue"> Submit </button>
+              </form>
+        </div>
+      </div>
+        <script>
+          $('#getdata').click(function () {
+            plotUrl = getPlotUrl()
+            //console.log("setting plot url ", plotUrl)
+            var parselat = parseFloat(lat.value);
+            var parselng = parseFloat(lng.value);
+            markerlatlng = {lat: parselat, lng: parselng};
+            //console.log(markerlatlng);
+            marker.setPosition(markerlatlng);
+            //console.log('Drawing CO chart')
+            drawChart();
+
+            setOverlay(map);
+            //initMap();
+          });
+        </script>
+       </div>
+       <script type="text/javascript"
+          src="https://www.google.com/jsapi?autoload={
+          'modules':[{
+            'name':'visualization',
+            'version':'1',
+            'packages':['corechart']
+          }]
+          }"></script>
+
+      <script type="text/javascript">
+      //  google.setOnLoadCallback(drawChart);
+      </script>
+      <div id="curve_chart" style="width: 900px; height: 500px"></div>
+    </div>
+  </body>
+</html>

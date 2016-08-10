@@ -17,6 +17,10 @@ app = Flask(__name__, static_url_path='')
 def index():
     return render_template('index.html')
 
+@app.route('/dev')
+def dev():
+    return render_template('index_dev.html')
+
 @app.route('/get_estimates_data', methods = ['GET'])
 def get_estimates_data():
     input_datetime = request.args.get('input_datetime')
