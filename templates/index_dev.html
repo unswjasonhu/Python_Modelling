@@ -1,28 +1,63 @@
 <!DOCTYPE html>
 <html>
   <head>
-  <link rel='stylesheet' type='text/css' href='/css/main.css'>
   <link rel="stylesheet" href="/css/jquery-ui-1.8.4.custom.css">
   <link rel="stylesheet" href="/css/mapstyle.css">
+  <!-- Latest compiled and minified CSS -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+  <link rel='stylesheet' type='text/css' href='/css/main.css'>
   <style type="text/css">
+  body {
+    background-color: #fffde2;
+  }
+
+  #chart {
+    margin: 5%;
+  }
   .container {
     height:100%;
+    margin:10px;
   }
   #map {
     margin:0;
     padding:0;
+    border: 3px solid #754926;
+    height: 99%;
+
+    border-radius: 8px;
+    -moz-border-radius: 8px;
+    -webkit-border-radius: 8px;
+  }
+  #map_row {
+    height: 100%;
+  }
+  #map_col {
     height: 100%;
   }
   #colorbar {
     position: absolute; 
     top: 50px; 
-    left: 110px; 
+    left: 100px; 
     z-index: 10;"
   }
+  #inputform {
+    float: none;
+    margin-left:0px;
+    width: 220px;
+  }
+  #input_form_col {
+      height: 100%;
+  }
+  h2 {
+      display: block;
+      font-size: 1.5em;
+      -webkit-margin-before: 0.83em;
+      -webkit-margin-after: 0.83em;
+      -webkit-margin-start: 0px;
+      -webkit-margin-end: 0px;
+      font-weight: bold;
+  }
   </style>
-  <!-- Latest compiled and minified CSS -->
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
-
 
   </head>
   <body>
@@ -167,15 +202,18 @@
         google.maps.event.addDomListener(window, 'load', initMap);
       </script>
 
-      <div class="row" style="height:75%">
-        <div class="col-md-8" style="height:100%">
+      <div id="map_row" class="row">
+        <div id="map_col" class="col-md-9">
             <img id="colorbar" src="" data-pin-nopin="true">
             <div id="map"></div>
             <!-- <div id="mask"></div> -->
         </div>
-        <div class="col-md-4" style="height:100%">
+        <div id="input_form_col" class="col-md-3">
             <div id="inputform">
               <form name="input">
+                <a href="/">
+                  <h2> Haze Watch </h2>
+                </a>
                 <label for="lat">Latitude: </label>
                 <input id="lat" type="textbox" class="textclass" maxlength="22" value="-33.92313">
                 <label for="lng">Longitude: </label>
@@ -225,7 +263,11 @@
       <script type="text/javascript">
       //  google.setOnLoadCallback(drawChart);
       </script>
-      <div id="curve_chart" style="width: 900px; height: 500px"></div>
+      <div class="row">
+          <div class="col-md-8">
+          <div id="curve_chart" ></div>
+        </div>
+      </div>
     </div>
   </body>
 </html>
