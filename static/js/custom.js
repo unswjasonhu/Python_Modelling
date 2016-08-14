@@ -1,4 +1,4 @@
-var map, heatmap, image;
+var heatmap, image;
 
 
 function getPlotUrl() {
