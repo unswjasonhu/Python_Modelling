@@ -17,6 +17,8 @@
   .container {
     height:100%;
     margin:10px;
+    width: inherit;
+    padding-right: 220px;
   }
   #map {
     margin:0;
@@ -30,9 +32,12 @@
   }
   #map_row {
     height: 100%;
+    padding: 1%;
   }
   #map_col {
     height: 100%;
+    width: 99%;
+    float: left;
   }
   #colorbar {
     position: absolute; 
@@ -40,13 +45,11 @@
     left: 100px; 
     z-index: 10;"
   }
-  #inputform {
-    float: none;
-    margin-left:0px;
-    width: 220px;
-  }
   #input_form_col {
-      height: 100%;
+    margin-right: -220px;
+    width: 220px;
+    height: 100%;
+    float: right;
   }
   h2 {
       display: block;
@@ -56,6 +59,10 @@
       -webkit-margin-start: 0px;
       -webkit-margin-end: 0px;
       font-weight: bold;
+  }
+  #curve_chart {
+    width: 900px;
+    height: 500px;
   }
   </style>
 
@@ -203,12 +210,12 @@
       </script>
 
       <div id="map_row" class="row">
-        <div id="map_col" class="col-md-9">
+        <div id="map_col">
             <img id="colorbar" src="" data-pin-nopin="true">
             <div id="map"></div>
             <!-- <div id="mask"></div> -->
         </div>
-        <div id="input_form_col" class="col-md-3">
+        <div id="input_form_col">
             <div id="inputform">
               <form name="input">
                 <a href="/">
@@ -264,7 +271,7 @@
       //  google.setOnLoadCallback(drawChart);
       </script>
       <div class="row">
-          <div class="col-md-8">
+          <div class="col-md-12">
           <div id="curve_chart" ></div>
         </div>
       </div>
