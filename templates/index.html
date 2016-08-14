@@ -1,64 +1,81 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <link rel='stylesheet' type='text/css' href='/css/main.css'>
-    <link rel="stylesheet" href="/css/jquery-ui-1.8.4.custom.css">
-    <link rel="stylesheet" href="/css/mapstyle.css">
-    <style type="text/css">
-      html, body { 
-        height: 100%; 
-        margin: 0; 
-        padding: 0; 
-        background-color: rgb(229, 227, 223);
-      }
-    #slider {
-        float: left;
-        display: inline;
-        width: 82px;
-        margin: -8px 6px 2px 6px;
-    }
-    .ui-slider .ui-slider-handle {
-        width: 8px; 
-        height: 20px;
-        margin-left: -4px;
-        margin-top: -3px;
-    }
-    #mask {
-        position: relative;
-        top: 0;
-        left: 0;
-        height: 100%;;
-        width: 100%;
-        background: url('/modeling/static/images/imagemask.png') no-repeat;
-    }
-    #map {
-        float:left; 
-        position: relative; 
-        height: 100%;
-        width: 75%;
-        overflow: hidden; 
-        transform: translateZ(0px); 
-    }
-    #colorbar {
-        position: absolute; 
-        top: 50px; 
-        left: 110px; 
-        z-index: 10;"
-    }
-    </style>
-    <!-- Latest compiled and minified CSS -->
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+  <link rel="stylesheet" href="/css/jquery-ui-1.8.4.custom.css">
+  <link rel="stylesheet" href="/css/mapstyle.css">
+  <!-- Latest compiled and minified CSS -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+  <link rel='stylesheet' type='text/css' href='/css/main.css'>
+  <style type="text/css">
+  body {
+    background-color: #fffde2;
+  }
 
+  #chart {
+    margin: 5%;
+  }
+  .container {
+    height:100%;
+    margin:10px;
+    width: inherit;
+    padding-right: 220px;
+  }
+  #map {
+    margin:0;
+    padding:0;
+    border: 3px solid #754926;
+    height: 99%;
+
+    border-radius: 8px;
+    -moz-border-radius: 8px;
+    -webkit-border-radius: 8px;
+  }
+  #map_row {
+    height: 100%;
+    padding: 1%;
+  }
+  #map_col {
+    height: 100%;
+    width: 99%;
+    float: left;
+  }
+  #colorbar {
+    position: absolute; 
+    top: 50px; 
+    left: 100px; 
+    z-index: 10;"
+  }
+  #input_form_col {
+    margin-right: -220px;
+    width: 220px;
+    height: 100%;
+    float: right;
+  }
+  h2 {
+      display: block;
+      font-size: 1.5em;
+      -webkit-margin-before: 0.83em;
+      -webkit-margin-after: 0.83em;
+      -webkit-margin-start: 0px;
+      -webkit-margin-end: 0px;
+      font-weight: bold;
+  }
+  #curve_chart {
+    width: 900px;
+    height: 500px;
+  }
+  </style>
 
   </head>
   <body>
-    <script src="https://code.jquery.com/jquery-2.2.4.min.js"   integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44="   crossorigin="anonymous"></script>
-    <!-- Latest compiled and minified JavaScript -->
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCDdSncqlYOdWZsj0l-9RM9KgDCVpg4CxI">
-    </script>
-    <script src="/modeling/static/js/custom.js"></script>
-    <script>
+    <div class="container">
+      <script src="https://code.jquery.com/jquery-2.2.4.min.js"   integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44="   crossorigin="anonymous"></script>
+      <!-- Latest compiled and minified JavaScript -->
+      <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+      <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCDdSncqlYOdWZsj0l-9RM9KgDCVpg4CxI">
+      </script>
+      <script src="/modeling/static/js/custom.js"></script>
+      <script>
         var hostname = "http://162.222.176.235/";
         var overlay;
         var marker;
@@ -71,10 +88,10 @@
           // Overlay parameters
           //[NW_BOUND,SW_BOUND,NE_BOUND,SE_BOUND] = [(-33.728545, 150.849275), (-33.982863, 150.849275), (-33.728545, 151.24753), (-33.982863, 151.24753)].
           var bounds = new google.maps.LatLngBounds(
-            //SW
-            new google.maps.LatLng(-33.982863, 150.849275),
-            //NE
-            new google.maps.LatLng(-33.728545, 151.24753)
+          //SW
+          new google.maps.LatLng(-33.982863, 150.849275),
+          //NE
+          new google.maps.LatLng(-33.728545, 151.24753)
           );
 
           var srcImage = hostname + getPlotUrl();
@@ -85,9 +102,9 @@
 
         function initMap() {
           var map = new google.maps.Map(document.getElementById('map'), {
-            center: myLatLng,
-            zoom: 11,
-            scaleControl:true,
+          center: myLatLng,
+          zoom: 11,
+          scaleControl:true,
           });
 
           drawChart();
@@ -100,20 +117,20 @@
           //home marker params
           home_image = '/images/markers/home.png';
           marker = new google.maps.Marker({
-            position: myLatLng,
-            map: map,
-            draggable: true,
-            icon: home_image,
-            title: 'UNSW is my home'
+          position: myLatLng,
+          map: map,
+          draggable: true,
+          icon: home_image,
+          title: 'UNSW is my home'
           });
           google.maps.event.addListener(marker,'dragend',function(event) {
-              markerlatlng = {lat: marker.getPosition().lat(), lng: marker.getPosition().lng()};
-              var lat = Number(Math.round(markerlatlng['lat']+'e5')+'e-5'); 
-              var lng = Number(Math.round(markerlatlng['lng']+'e5')+'e-5'); 
-              $('#lat').val(lat);
-              $('#lng').val(lng);
+            markerlatlng = {lat: marker.getPosition().lat(), lng: marker.getPosition().lng()};
+            var lat = Number(Math.round(markerlatlng['lat']+'e5')+'e-5'); 
+            var lng = Number(Math.round(markerlatlng['lng']+'e5')+'e-5'); 
+            $('#lat').val(lat);
+            $('#lng').val(lng);
 
-              //marker.setPosition(markerlatlng);
+            //marker.setPosition(markerlatlng);
           });
         }
 
@@ -190,64 +207,74 @@
         };
 
         google.maps.event.addDomListener(window, 'load', initMap);
-    </script>
-    <div id="container">
-        <img id="colorbar" src="" data-pin-nopin="true">
-        <div id="map"></div>
-        <!-- <div id="mask"></div> -->
-        <div id="inputform">
-            <form name="input">
-            <h2>Haze Watch</h2></a>
-            <label for="lat">Latitude: </label><br />
+      </script>
+
+      <div id="map_row" class="row">
+        <div id="map_col">
+            <img id="colorbar" src="" data-pin-nopin="true">
+            <div id="map"></div>
+            <!-- <div id="mask"></div> -->
+        </div>
+        <div id="input_form_col">
+            <div id="inputform">
+              <form name="input">
+                <a href="/">
+                  <h2> Haze Watch </h2>
+                </a>
+                <label for="lat">Latitude: </label>
                 <input id="lat" type="textbox" class="textclass" maxlength="22" value="-33.92313">
-            <p><label for="lng">Longitude: </label><br />
+                <label for="lng">Longitude: </label>
                 <input id="lng" type="textbox" class="textclass" maxlength="22" value="150.98812">
-            <img src="/images/markers/home2.png" style="vertical-align:middle;">
-            <p><label for="date">Date: </label><br />
+                <img src="/images/markers/home2.png" style="vertical-align:middle;">
+                <label for="date">Date: </label>
                 <input id="date" type="textbox" class="textclass" maxlength="10" value="2015-09-11"></p>
 
-            <p><label for="time">Time: </label><br />
+                <label for="time">Time: </label>
                 <input id="time" type="textbox" class="textclass2" maxlength="8" size="8" value="10:00:00">
-                <div id="slider"></div><br /></p>
 
-            <p><label for="pollutant">Pollutant: </label><br />
+                <label for="pollutant">Pollutant: </label>
                 <select id="pollutant">
-                    <option selected value = "co">CO</option>
+                  <option selected value = "co">CO</option>
                 </select>
 
                 <button type="button" id="getdata" value="checkvalue"> Submit </button>
+              </form>
+        </div>
+      </div>
+        <script>
+          $('#getdata').click(function () {
+            plotUrl = getPlotUrl()
+            //console.log("setting plot url ", plotUrl)
+            var parselat = parseFloat(lat.value);
+            var parselng = parseFloat(lng.value);
+            markerlatlng = {lat: parselat, lng: parselng};
+            //console.log(markerlatlng);
+            marker.setPosition(markerlatlng);
+            //console.log('Drawing CO chart')
+            drawChart();
 
-                <script>
-                $('#getdata').click(function () {
-                    plotUrl = getPlotUrl()
-                    //console.log("setting plot url ", plotUrl)
-                    var parselat = parseFloat(lat.value);
-                    var parselng = parseFloat(lng.value);
-                    markerlatlng = {lat: parselat, lng: parselng};
-                    //console.log(markerlatlng);
-                    marker.setPosition(markerlatlng);
-                    //console.log('Drawing CO chart')
-                    drawChart();
-
-                    setOverlay(map);
-                    //initMap();
-                });
-                </script>
-            </form>
+            setOverlay(map);
+            //initMap();
+          });
+        </script>
        </div>
-   </div>
-   <script type="text/javascript"
+       <script type="text/javascript"
           src="https://www.google.com/jsapi?autoload={
-            'modules':[{
-              'name':'visualization',
-              'version':'1',
-              'packages':['corechart']
-            }]
+          'modules':[{
+            'name':'visualization',
+            'version':'1',
+            'packages':['corechart']
+          }]
           }"></script>
 
-    <script type="text/javascript">
-    //  google.setOnLoadCallback(drawChart);
-    </script>
-    <div id="curve_chart" style="width: 900px; height: 500px"></div>
+      <script type="text/javascript">
+      //  google.setOnLoadCallback(drawChart);
+      </script>
+      <div class="row">
+          <div class="col-md-12">
+          <div id="curve_chart" ></div>
+        </div>
+      </div>
+    </div>
   </body>
 </html>
