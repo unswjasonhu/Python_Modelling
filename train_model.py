@@ -347,7 +347,7 @@ def main():
     Z = np.float64(X)
     y = np.float64(y)
 
-    X_train, X_test, y_train, y_test = train_test_split(Z, y, test_size =0 , random_state=0)
+    X_train, X_test, y_train, y_test = train_test_split(Z, y, test_size =0.0 , random_state=0)
     if use_nn:
         pipeline = Pipeline([
             ('min/max scaler', preprocessing.MinMaxScaler(feature_range=(0.0, 1.0))),
