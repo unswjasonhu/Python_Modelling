@@ -214,7 +214,7 @@ def create_heatmap(grid, name, strip=False):
     """ Create heatmap given a grid, save it with the name provided"""
     x,y = range(GRID_RES), range(GRID_RES)
     #setup the 2D grid with Numpy
-    x, y = np.meshgrid(x, y)
+    xx, yy = np.meshgrid(x, y)
 
     #convert intensity (list of lists) to a numpy array for plotting
     intensity = np.array(grid)
@@ -226,7 +226,9 @@ def create_heatmap(grid, name, strip=False):
         fig = plt.figure(frameon=False)
         ax = fig.add_axes([0, 0, 1, 1])
         ax.axis('off')
-        plt.pcolormesh(x, y, Zm, vmin=0, vmax=10)
+        #set the colormap
+        jet = plt.get_cmap('jet')
+        plt.pcolormesh(xx, yy, Zm[::-1], vmin=0, vmax=10,cmap=jet)
         fig.canvas.print_png('{0}.png'.format(name), bbox_inches='tight')
 
         # Colorbar section
@@ -237,7 +239,7 @@ def create_heatmap(grid, name, strip=False):
         #fig.canvas.print_png('{0}_colorbar.png'.format(name), bbox_inches='tight')
 
     else:
-        plt.pcolormesh(x, y, Zm)
+        plt.pcolormesh(xx, yy, Zm[::-1])
         plt.colorbar() #need a colorbar to show the intensity scale
         plt.savefig('{0}.png'.format(name))
     plt.close()
