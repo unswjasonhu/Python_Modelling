@@ -63,22 +63,23 @@ function drawChart() {
         async: false,
         data: "",
         success: function(data) {
-
+          colv1Array = data;
           $.each(data, function(index, t){
-              for (k=0; k<t.length; k++) {
-                  colvlArray[k] = t[k][1];
-              }
-              //console.log(colvlArray);
+            for (k=0; k<t.length; k++) {
+                colvlArray[k] = t[k];
+            }
           });
         }
-
     }).responseText;
+
+    var dataValues = colv1Array[date.value];
+    
     var chartdata = new google.visualization.DataTable();
     chartdata.addColumn('string', 'Time');
     chartdata.addColumn('number', 'CO level');
-    for (k=0; k<colvlArray.length; k++) {
-        var timeString = (k+1) +':00';
-        chartdata.addRow([timeString, colvlArray[k]]);
+    for (k=0; k < dataValues.length; k++) {
+        var timestring = dataValues[k][0]+ ':00';
+        chartdata.addRow([timestring,dataValues[k][1]]);
     }
 
 
@@ -118,7 +119,7 @@ function drawChart() {
                 bold: true,
                 fontSize: 20,
                 color: '#1a237e',
-            }
+            },
         }
     };
 
