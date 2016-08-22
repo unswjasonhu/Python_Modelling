@@ -93,7 +93,8 @@ function drawChart() {
         lineWidth: 4,
         lineDashStyle: [5,2,3,2],
         legend: {
-            position: 'bottom'
+            position: 'in',
+            alignment: 'end',
         },
         hAxis: {
             title: 'Time',
