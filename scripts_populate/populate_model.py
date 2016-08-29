@@ -3,7 +3,7 @@ from __future__ import division
 
 import MySQLdb
 
-from resources import *
+from ..resources import *
 
 from datetime import datetime, timedelta
 

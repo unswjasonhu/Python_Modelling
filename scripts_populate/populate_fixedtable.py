@@ -4,7 +4,7 @@ import MySQLdb
 import sys
 from datetime import timedelta, datetime
 
-from resources import get_flattened_index
+from ..resources import get_flattened_index
 
 
 def main():

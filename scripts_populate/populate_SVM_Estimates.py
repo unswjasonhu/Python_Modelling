@@ -4,7 +4,7 @@ import pickle
 from datetime import datetime,timedelta
 
 import numpy as np
-from resources import data_from_db, classify_hour, get_season
+from ..resources import data_from_db, classify_hour, get_season
 
 import pdb
 

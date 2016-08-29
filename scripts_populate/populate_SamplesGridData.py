@@ -7,8 +7,8 @@ import sys
 from datetime import timedelta, datetime
 import numpy as np
 
-from resources import data_from_db, gridify_sydney
-from resources import NW_BOUND,SW_BOUND,NE_BOUND, create_mean_value_grid, get_season
+from ..resources import data_from_db, gridify_sydney
+from ..resources import NW_BOUND,SW_BOUND,NE_BOUND, create_mean_value_grid, get_season
 
 import pdb
 
