@@ -121,6 +121,8 @@ function drawChart() {
                 fontSize: 20,
                 color: '#1a237e',
             },
+            minValue: 0,
+            maxValue: 20,
         }
     };
 

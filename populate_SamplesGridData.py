@@ -12,7 +12,7 @@ from resources import NW_BOUND,SW_BOUND,NE_BOUND, create_mean_value_grid, get_se
 
 import pdb
 
-def main():
+def main(granularity):
     """
 
     SVM uses the known data, called SamplesGridData, training the model with this data
@@ -42,26 +42,25 @@ def main():
     #override 
     end_date = datetime(2015,11,1)
 
-    #Choose the data table to use
-    zero_mean = True
     non_zero_grid_count_threshold = 10
 
     #second pass is needed for inputting the mean and stddev for all the rows of the table
     populate_initially = True
     populate_second_pass = True
 
-
-    #table which has data inserted for model training
-    data_table = "samplesGridData"
+    data_table = granularity['data_table']
+    interval_period = granularity['interval_period']
+    date_format = granularity["date_format"]
+    epoch_variable = granularity['epoch_variable']
 
     #epochs are time period to iterate over
     #provide some buffer time (extra epoch)
-    epochs =  ((end_date - start_date).days*24 + 1)
+    epochs =  ((end_date - start_date).days*epoch_variable + 1)
     
     print "Start data and end date: {0} to {1}".format(start_date, end_date)
     print "Number of hours of data: {0}".format(epochs)
     
-    first_date = start_date
+    target_date = start_date
     total_rows = 0
     no_epoch_count = 0
     skip_epoch_count = 0
@@ -70,37 +69,54 @@ def main():
     if populate_initially:
         for _ in xrange(epochs):
             #do a quick check to see if data for a datetime exists, skip if it does
-            sql_str = """ select datetime from {0} where datetime="{1}" limit 1;""".format(data_table, first_date)
+            sql_str = """select datetime from {0} where datetime="{1}" limit 1;""".format(data_table, target_date)
             cursor.execute(sql_str)
             if cursor.rowcount > 0:
                 skip_epoch_count += 1
-                first_date += timedelta(seconds=3600)
+                target_date += timedelta(seconds=interval_period)
                 continue
 
             #is there sensor data, skip if not
-            select_str = """select * from Samples where user_id != 2 and date like "{0}%" and co < 60 and co > 0 limit 1;""".format(first_date.strftime("%Y-%m-%d %H"))
+            select_str = """select 
+                                * 
+                            from 
+                                Samples 
+                            where user_id != 2 and date like "{0}%" and co < 60 and co > 0 
+                                limit 1;""".format(target_date.strftime(date_format))
             cursor.execute(select_str)
             if cursor.rowcount == 0:
                 skip_epoch_count += 1
-                print "Skipped {0} due to lack of sensor data".format(first_date)
-                first_date += timedelta(seconds=3600)
+                print "Skipped {0} due to lack of sensor data".format(target_date)
+                target_date += timedelta(seconds=interval_period)
                 continue;
-        
-            #get data for an hour
+
+            #get data for an time period
             select_str = """SELECT 
-                                date as datetime, DATE_FORMAT(date,"%Y-%m-%d") AS date, DATE_FORMAT(date,"%H") as time, if(WEEKDAY(date)<5, true, false) AS weekdays, WEEKDAY(date) AS dayoftheweek, latitude, longitude, user_id, co 
+                                date as datetime, DATE_FORMAT(date,"%Y-%m-%d") AS date, 
+                                DATE_FORMAT(date,"%H") as time, 
+                                DATE_FORMAT(date,"%i") as minute, 
+                                if(WEEKDAY(date)<5, true, false) AS weekdays, 
+                                WEEKDAY(date) AS dayoftheweek, 
+                                latitude, longitude, user_id, co 
                             FROM 
                                 Samples 
                             WHERE 
-                                user_id != 2 and date between "{0}" and date_add("{0}", interval 1 hour) and co is not null and latitude is not null and longitude is not null AND (latitude <= {1} AND latitude >= {2}) AND (longitude >= {3} AND longitude <= {4}) AND co > 0 AND co < 60
+                                user_id != 2 AND date between "{0}" AND DATE_ADD("{0}", INTERVAL {5} SECOND) 
+                                AND co is not null and latitude is not null and longitude is not null 
+                                AND (latitude <= {1} AND latitude >= {2}) 
+                                AND (longitude >= {3} AND longitude <= {4}) AND co > 0 AND co < 60
                             ORDER BY
-                                date asc """.format(first_date, NW_BOUND[0], SW_BOUND[0], NW_BOUND[1], NE_BOUND[1])
+                                date asc """.format(
+                                    target_date, 
+                                    NW_BOUND[0], SW_BOUND[0], NW_BOUND[1], NE_BOUND[1], 
+                                    interval_period
+                                )
 
             df_mysql = data_from_db(select_str, verbose=True, exit_on_zero=False)
             if df_mysql is None:
-                print "No data returned for {0}".format(first_date)
+                print "No data returned for {0}".format(target_date)
                 no_epoch_count += 1
-                first_date += timedelta(seconds=3600)
+                target_date += timedelta(seconds=interval_period)
                 continue
 
             #check the number of bins or grid locations populated
@@ -109,57 +125,86 @@ def main():
             #discount grid if it doesn't have enough pixels (i.e. less than threshold)
             if non_zero_grid_count < non_zero_grid_count_threshold:
                 skip_epoch_count += 1
-                print "Skipped {0} due to non zero grid count less than threshold".format(first_date)
-                first_date += timedelta(seconds=3600)
+                print "Skipped {0} due to non zero grid count less than threshold".format(target_date)
+                target_date += timedelta(seconds=interval_period)
                 continue
 
             #interpolate to get a grid
             known, z, ask, _ = gridify_sydney(df_mysql, verbose=False, heatmap=False)
             
             if len(known) == 0:
-                raise Exception("No data for {0}".format(first_date))
+                raise Exception("No data for {0}".format(target_date))
                 sys.exit()
 
             columns = df_mysql.columns.values
             vals = list(df_mysql.iloc[0])
             row_dict = dict(zip(columns, vals))
             relevant_columns = ['time','weekdays','dayoftheweek']
-            data_common = ['"{0}"'.format(row_dict['datetime'].strftime("%Y-%m-%d %H:00:00"))] + ['"{0}"'.format(row_dict['date'])] + ["{0}".format(row_dict[col]) for col in relevant_columns] + ["{0}".format(get_season(row_dict['datetime']))]
+            data_common = ['"{}"'.format(row_dict['datetime'].strftime("%Y-%m-%d %H:00:00"))] + \
+                    ['"{}"'.format(row_dict['date'])] + \
+                    ["{}".format(row_dict[col]) for col in relevant_columns] + \
+                    ["{}".format(get_season(row_dict['datetime']))]
 
-            if zero_mean:
-                select_str = 'select date, location_name, co  from Samples where user_id=2 and date="{0}" and (location_name="Prospect" or location_name="Rozelle" or location_name="Liverpool" or location_name="Chullora") order by location_name;'.format(row_dict['datetime'].strftime("%Y-%m-%d %H:00:00"))
-                fixed_samples_data = data_from_db(select_str, verbose=False, exit_on_zero=False)
+            # hour always needs to be used here to retrieve fixed station values
+            select_str = """select
+                              date, location_name, co
+                          from
+                              Samples
+                          where
+                              user_id=2 and date="{0}" and
+                              (location_name="Prospect" or location_name="Rozelle"
+                              or location_name="Liverpool" or location_name="Chullora")
+                          order by
+                              location_name;""".format(row_dict['datetime'].strftime("%Y-%m-%d %H:00:00"))
+
+            fixed_samples_data = data_from_db(select_str, verbose=False, exit_on_zero=False)
+
+            try:
                 assert len(fixed_samples_data) == 4
-                FIXED_LOCATIONS = ['Chullora', 'Liverpool', 'Prospect', 'Rozelle']
-                mean_fixed = np.nanmean([fixed_samples_data[fixed_samples_data.location_name==location]['co'].iloc[0] for location in FIXED_LOCATIONS])
-                co_chullora = fixed_samples_data[fixed_samples_data.location_name=='Chullora']['co'].iloc[0] if not np.isnan(fixed_samples_data[fixed_samples_data.location_name=='Chullora']['co'].iloc[0]) else mean_fixed
-                co_liverpool = fixed_samples_data[fixed_samples_data.location_name=='Liverpool']['co'].iloc[0] if not np.isnan(fixed_samples_data[fixed_samples_data.location_name=='Liverpool']['co'].iloc[0]) else mean_fixed
-                co_prospect = fixed_samples_data[fixed_samples_data.location_name=='Prospect']['co'].iloc[0]  if not np.isnan(fixed_samples_data[fixed_samples_data.location_name=='Prospect']['co'].iloc[0]) else mean_fixed
-                co_rozelle = fixed_samples_data[fixed_samples_data.location_name=='Rozelle']['co'].iloc[0]  if not np.isnan(fixed_samples_data[fixed_samples_data.location_name=='Rozelle']['co'].iloc[0]) else mean_fixed
+            except AssertionError:
+                print "error: 4 fixed station values not found for {}".format(target_date)
+                sys.exit()
 
-                for i, _ in enumerate(z):
-                    total_rows += 1
-                    # input data into sql
-                    grid_location_row, grid_location_col = known[i]
-                    data = data_common + ["{0}".format(x) for x in [grid_location_row, grid_location_col, co_chullora, co_liverpool, co_prospect, co_rozelle, z[i]]]
-                    #print data
-                    insert_str = """insert ignore into {0} (datetime, date, time, weekdays, dayoftheweek, season, grid_location_row, grid_location_col, co_chullora, co_liverpool, co_prospect, co_rozelle, co_original) values ({1}); """.format(data_table, ','.join(data))
-                    try:
-                        cursor.execute(insert_str)
-                    except:
-                        print insert_str
-                        pdb.set_trace()
-            else:
-                  raise Exception("You should always be running this zero mean set")
+            FIXED_LOCATIONS = ['Chullora', 'Liverpool', 'Prospect', 'Rozelle']
+            mean_fixed = np.nanmean([fixed_samples_data[fixed_samples_data.location_name==location]['co'].iloc[0] for location in FIXED_LOCATIONS])
+
+            co_chullora = fixed_samples_data[fixed_samples_data.location_name=='Chullora']['co'].iloc[0] if not np.isnan(fixed_samples_data[fixed_samples_data.location_name=='Chullora']['co'].iloc[0]) else mean_fixed
+            co_liverpool = fixed_samples_data[fixed_samples_data.location_name=='Liverpool']['co'].iloc[0] if not np.isnan(fixed_samples_data[fixed_samples_data.location_name=='Liverpool']['co'].iloc[0]) else mean_fixed
+            co_prospect = fixed_samples_data[fixed_samples_data.location_name=='Prospect']['co'].iloc[0]  if not np.isnan(fixed_samples_data[fixed_samples_data.location_name=='Prospect']['co'].iloc[0]) else mean_fixed
+            co_rozelle = fixed_samples_data[fixed_samples_data.location_name=='Rozelle']['co'].iloc[0]  if not np.isnan(fixed_samples_data[fixed_samples_data.location_name=='Rozelle']['co'].iloc[0]) else mean_fixed
+
+            for i, _ in enumerate(z):
+                total_rows += 1
+                # input data into sql
+                grid_location_row, grid_location_col = known[i]
+                data = data_common + \
+                        ["{0}".format(x) for x in [grid_location_row, grid_location_col, co_chullora, co_liverpool, co_prospect, co_rozelle, z[i]]]
+                
+                insert_str = """
+                                 insert ignore into {0} 
+                                     (datetime, date, time, weekdays, 
+                                     dayoftheweek, season, 
+                                     grid_location_row, 
+                                     grid_location_col, 
+                                     co_chullora, co_liverpool, co_prospect, co_rozelle, co_original) 
+                                 values 
+                                     ({1}); 
+                             """.format(data_table, ','.join(data))
+                try:
+                    cursor.execute(insert_str)
+                except:
+                    print insert_str
+                    pdb.set_trace()
             
-            print "At {0}, Number of rows considered in total: {1}".format(first_date, total_rows)
+            print "At {0}, Number of rows considered in total: {1}".format(target_date, total_rows)
             # commit
             db.commit()
-            first_date += timedelta(seconds=3600)
+            target_date += timedelta(seconds=interval_period)
 
-    #after all the rows have been populated with the original co, we need to populate the normalised value, mean and std
+    # after all the rows have been populated with the original co, 
+    # we need to populate the normalised value, mean and std
     if populate_second_pass:
-        select_str = """ select * from {0};""".format(data_table)
+        select_str = """ select * from {};""".format(data_table)
         df_mysql = data_from_db(select_str, verbose=True, exit_on_zero=False)
         co_mean, co_stddev = df_mysql['co_original'].mean(), df_mysql['co_original'].std(ddof=0)
         df_mysql['co_mean'] = co_mean
@@ -167,7 +212,14 @@ def main():
         df_mysql['co'] = (df_mysql['co_original']-co_mean)/co_stddev
 
         for index, row in df_mysql.iterrows():
-            update_sql = "UPDATE {0} SET co={1}, co_mean={2}, co_stddev={3} WHERE datetime='{4}' AND grid_location_row={5} AND grid_location_col={6}".format(data_table, row['co'], row['co_mean'], row['co_stddev'], row['datetime'], row['grid_location_row'], row['grid_location_col'])
+            update_sql = """
+            UPDATE 
+                {0} 
+            SET 
+                co={1}, co_mean={2}, co_stddev={3} 
+            WHERE 
+                datetime='{4}' AND grid_location_row={5} AND grid_location_col={6}
+            """.format(data_table, row['co'], row['co_mean'], row['co_stddev'], row['datetime'], row['grid_location_row'], row['grid_location_col'])
             cursor.execute(update_sql)
         db.commit()
 
@@ -178,8 +230,25 @@ def main():
 if __name__ == "__main__":
         print "Starting script"
         start_time = datetime.now()
-        # execute only if run as a script
-        main()
+        #table which has data inserted for model training
+        granularities = {
+            "hour": {
+                "interval": "hour",
+                "epoch_variable": 24,
+                "interval_period": 3600,
+                "date_format": "%Y-%m-%d %H",
+                "data_table": "samplesGridData",
+            },
+            "minute": {
+                "interval": "minute",
+                "epoch_variable": 24*60,
+                "interval_period": 60,
+                "date_format": "%Y-%m-%d %H:%i",
+                "data_table": "samplesGridData",
+            },
+        }
+
+        main(granularities['hour'])
         end_time = datetime.now()
         time_taken = end_time - start_time
         print "Time taken is ", time_taken.seconds

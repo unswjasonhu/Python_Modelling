@@ -1,2 +1,3 @@
 *.pyc
 static/images
+static/heatmap_images/

@@ -308,31 +308,6 @@ def gridify_sydney(df, heatmap_name = IMAGES_BASE_DIR + "/before_interpolation_a
     """ Convert Sydney to a grid """
     sydney_grid, count = create_mean_value_grid(df)
 
-    ##create an empty grid, with each element as a list
-    #expanded_grid = [[[] for x in xrange(GRID_RES)] for x in xrange(GRID_RES)]
-    ##need a way to map bounds to a number between 0 and 99
-    #row_iterator = df.iterrows()
-    ##for each row in the data frame
-    #for i, row in row_iterator:	
-    #    #assign it to the grid somewhere
-    #    lat_index, lon_index =	get_index(row['latitude'],row['longitude'])
-    #    #print lat_index
-    #    #print lon_index
-    #    #print row["latitude"], row["longitude"]
-    #    #print syd_grid_lon_dist
-    #    expanded_grid[lat_index][lon_index].append(row['co'])
-
-    ##create zeros array	
-    #sydney_grid = np.zeros((GRID_RES,GRID_RES))
-    #
-    ##do the aggregations and put it into a numpy array
-    #count = 0
-    #for i in xrange(GRID_RES):
-    #    for j in xrange(GRID_RES):
-    #        sydney_grid[i][j] = np.mean(expanded_grid[i][j])
-    #        if not np.isnan(sydney_grid[i][j]):
-    #            count += 1
-
     #do some aggregation function over the buckets to get the final grid
     #do the interpolation
     #get values for interpolation

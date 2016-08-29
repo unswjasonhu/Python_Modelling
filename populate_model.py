@@ -92,6 +92,11 @@ def populate_model_table(cursor, input_datetime, grid_location, day_to_co, co):
     cursor.execute(insert_str)
 
 def main():
+
+    """
+    This is no longer used to generate data for the model.
+    """
+
     #Step 3 - Get the output from the fixed table
     db = MySQLdb.connect("localhost","pollution","pollution","pollution_monitoring" )
 
