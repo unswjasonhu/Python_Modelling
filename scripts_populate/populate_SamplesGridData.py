@@ -4,7 +4,7 @@ from __future__ import division
 
 import MySQLdb
 import sys
-from datetime import timedelta, datetime
+from datetime import datetime
 import numpy as np
 
 from os import path
@@ -14,6 +14,10 @@ from resources import data_from_db, gridify_sydney
 from resources import NW_BOUND,SW_BOUND,NE_BOUND, create_mean_value_grid, get_season
 
 import pdb
+
+total_rows = 0
+no_epoch_count = 0
+skip_epoch_count = 0
 
 
 def get_time_periods_with_sensor_data(start_date, end_date, data_table, interval):
@@ -42,9 +46,9 @@ def get_time_periods_with_sensor_data(start_date, end_date, data_table, interval
 
     db.close()
     if interval == 'minute':
-        return ["{}{:02d}:".format(t, i) for t in time_periods for i in xrange(60)]
+        return sorted(["{}{:02d}".format(t, i) for t in time_periods for i in xrange(60)])
     else:
-        return time_periods
+        return sorted(["{}00".format(t) for t in time_periods])
 
 
 def main(granularity, start_date, end_date):
@@ -56,6 +60,8 @@ def main(granularity, start_date, end_date):
 
     """
 
+    global total_rows, skip_epoch_count, non_zero_grid_count, no_epoch_count
+
     # Open database connection
     #db = MySQLdb.connect("localhost","pollution","pollution","pollution_monitoring" )
 
@@ -66,7 +72,7 @@ def main(granularity, start_date, end_date):
 
     #second pass is needed for inputting the mean and stddev for all the rows of the table
     populate_initially = True
-    populate_second_pass = True
+    populate_second_pass = False
 
     interval = granularity['interval']
     data_table = granularity['data_table']
@@ -74,23 +80,22 @@ def main(granularity, start_date, end_date):
     date_format = granularity["date_format"]
     epoch_variable = granularity['epoch_variable']
 
-    #epochs are time period to iterate over
-    #provide some buffer time (extra epoch)
-    epochs =  ((end_date - start_date).days*epoch_variable + 1)
-    
-    print "Start data and end date: {0} to {1}".format(start_date, end_date)
-    print "Number of hours of data: {0}".format(epochs)
-
     target_datetimes = get_time_periods_with_sensor_data(start_date, end_date, data_table, interval)
-    
-    target_date = start_date
-    total_rows = 0
-    no_epoch_count = 0
-    skip_epoch_count = 0
+
+    #epochs are time period to iterate over
+    epochs =  len(target_datetimes)
+
+    print "Start data and end date: {} to {}".format(start_date, end_date)
+    print "Number of time periods of data: {}, granularity is {}".format(epochs, interval)
+
+    db = MySQLdb.connect("localhost","pollution","pollution","pollution_monitoring" )
+    cursor = db.cursor()
+
 
     #populate the first stage of the process for samplesGridData
     if populate_initially:
         for target_datetime in target_datetimes:
+            target_datetime = datetime.strptime(target_datetime, '%Y-%m-%d %H:%M')
             #get data for an time period
             select_str = """SELECT 
                                 date as datetime, DATE_FORMAT(date,"%Y-%m-%d") AS date, 
@@ -108,16 +113,16 @@ def main(granularity, start_date, end_date):
                                 AND (longitude >= {3} AND longitude <= {4}) AND co > 0 AND co < 60
                             ORDER BY
                                 date asc """.format(
-                                    target_date, 
+                                    target_datetime, 
                                     NW_BOUND[0], SW_BOUND[0], NW_BOUND[1], NE_BOUND[1], 
                                     interval_period
                                 )
 
+            import ipdb; ipdb.set_trace()
             df_mysql = data_from_db(select_str, verbose=True, exit_on_zero=False)
             if df_mysql is None:
-                print "No data returned for {0}".format(target_date)
+                print "No data returned for {0}".format(target_datetime)
                 no_epoch_count += 1
-                target_date += timedelta(seconds=interval_period)
                 continue
 
             #check the number of bins or grid locations populated
@@ -126,15 +131,14 @@ def main(granularity, start_date, end_date):
             #discount grid if it doesn't have enough pixels (i.e. less than threshold)
             if non_zero_grid_count < non_zero_grid_count_threshold:
                 skip_epoch_count += 1
-                print "Skipped {0} due to non zero grid count less than threshold".format(target_date)
-                target_date += timedelta(seconds=interval_period)
+                print "Skipped {0} due to non zero grid count less than threshold".format(target_datetime)
                 continue
 
             #interpolate to get a grid
             known, z, ask, _ = gridify_sydney(df_mysql, verbose=False, heatmap=False)
             
             if len(known) == 0:
-                raise Exception("No data for {0}".format(target_date))
+                raise Exception("No data for {0}".format(target_datetime))
                 sys.exit()
 
             columns = df_mysql.columns.values
@@ -163,16 +167,20 @@ def main(granularity, start_date, end_date):
             try:
                 assert len(fixed_samples_data) == 4
             except AssertionError:
-                print "error: 4 fixed station values not found for {}".format(target_date)
+                print "error: 4 fixed station values not found for {}".format(target_datetime)
                 sys.exit()
 
             FIXED_LOCATIONS = ['Chullora', 'Liverpool', 'Prospect', 'Rozelle']
             mean_fixed = np.nanmean([fixed_samples_data[fixed_samples_data.location_name==location]['co'].iloc[0] for location in FIXED_LOCATIONS])
 
-            co_chullora = fixed_samples_data[fixed_samples_data.location_name=='Chullora']['co'].iloc[0] if not np.isnan(fixed_samples_data[fixed_samples_data.location_name=='Chullora']['co'].iloc[0]) else mean_fixed
-            co_liverpool = fixed_samples_data[fixed_samples_data.location_name=='Liverpool']['co'].iloc[0] if not np.isnan(fixed_samples_data[fixed_samples_data.location_name=='Liverpool']['co'].iloc[0]) else mean_fixed
-            co_prospect = fixed_samples_data[fixed_samples_data.location_name=='Prospect']['co'].iloc[0]  if not np.isnan(fixed_samples_data[fixed_samples_data.location_name=='Prospect']['co'].iloc[0]) else mean_fixed
-            co_rozelle = fixed_samples_data[fixed_samples_data.location_name=='Rozelle']['co'].iloc[0]  if not np.isnan(fixed_samples_data[fixed_samples_data.location_name=='Rozelle']['co'].iloc[0]) else mean_fixed
+            co_chullora = fixed_samples_data[fixed_samples_data.location_name=='Chullora']['co'].iloc[0] \
+                if not np.isnan(fixed_samples_data[fixed_samples_data.location_name=='Chullora']['co'].iloc[0]) else mean_fixed
+            co_liverpool = fixed_samples_data[fixed_samples_data.location_name=='Liverpool']['co'].iloc[0] \
+                if not np.isnan(fixed_samples_data[fixed_samples_data.location_name=='Liverpool']['co'].iloc[0]) else mean_fixed
+            co_prospect = fixed_samples_data[fixed_samples_data.location_name=='Prospect']['co'].iloc[0]  \
+                if not np.isnan(fixed_samples_data[fixed_samples_data.location_name=='Prospect']['co'].iloc[0]) else mean_fixed
+            co_rozelle = fixed_samples_data[fixed_samples_data.location_name=='Rozelle']['co'].iloc[0]  \
+                if not np.isnan(fixed_samples_data[fixed_samples_data.location_name=='Rozelle']['co'].iloc[0]) else mean_fixed
 
             for i, _ in enumerate(z):
                 total_rows += 1
@@ -197,16 +205,19 @@ def main(granularity, start_date, end_date):
                     print insert_str
                     pdb.set_trace()
             
-            print "At {0}, Number of rows considered in total: {1}".format(target_date, total_rows)
+            print "At {0}, Number of rows considered in total: {1}".format(target_datetime, total_rows)
             # commit
             db.commit()
-            target_date += timedelta(seconds=interval_period)
+    print "No epoch count: {0} and Skip epoch counts {1}".format(no_epoch_count,skip_epoch_count)
 
     # after all the rows have been populated with the original co, 
     # we need to populate the normalised value, mean and std
     if populate_second_pass:
         select_str = """ select * from {};""".format(data_table)
         df_mysql = data_from_db(select_str, verbose=True, exit_on_zero=False)
+        if not df_mysql:
+            print "no rows in {}. Script completed".format(data_table)
+            return 
         co_mean, co_stddev = df_mysql['co_original'].mean(), df_mysql['co_original'].std(ddof=0)
         df_mysql['co_mean'] = co_mean
         df_mysql['co_stddev'] = co_stddev
@@ -224,13 +235,14 @@ def main(granularity, start_date, end_date):
             cursor.execute(update_sql)
         db.commit()
 
-    #db.close()
-    print "No epoch count: {0} and Skip epoch counts {1}".format(no_epoch_count,skip_epoch_count)
+    db.close()
 
 
 if __name__ == "__main__":
     print "Starting script"
     script_start_time = datetime.now()
+    #start_date = datetime(2013,4,22)
+    #end_date = datetime(2013,4,25)
     start_date = datetime(2013,3,1)
     end_date = datetime(2015,11,1)
 
@@ -255,6 +267,7 @@ if __name__ == "__main__":
     main(granularities['minute'], start_date, end_date)
     script_end_time = datetime.now()
     time_taken = script_end_time - script_start_time
+
     print "Time taken is ", time_taken.seconds
     print "Script finished!"
 
