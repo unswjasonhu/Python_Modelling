@@ -9,10 +9,6 @@ from services.services import get_estimates_data_service, generate_2d_plot
 
 app = Flask(__name__, static_url_path='')
 
-#@app.route('/js/<path:filename>')
-#def send_js(filename):
-#        return send_from_directory('static/js', filename)
-
 @app.route('/')
 def index():
     return render_template('index.html')

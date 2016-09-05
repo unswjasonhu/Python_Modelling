@@ -1,7 +1,6 @@
 #! /usr/bin/python
 from __future__ import division
 
-
 import MySQLdb
 import sys
 from datetime import datetime
@@ -68,7 +67,9 @@ def main(granularity, start_date, end_date):
     # prepare a cursor object using cursor() method
     #cursor = db.cursor()
 
-    non_zero_grid_count_threshold = 10
+    non_zero_grid_count_threshold = 1
+
+    errors = []
 
     #second pass is needed for inputting the mean and stddev for all the rows of the table
     populate_initially = True
@@ -99,7 +100,7 @@ def main(granularity, start_date, end_date):
             #get data for an time period
             select_str = """SELECT 
                                 date as datetime, DATE_FORMAT(date,"%Y-%m-%d") AS date, 
-                                DATE_FORMAT(date,"%H") as time, 
+                                DATE_FORMAT(date,"%H") as hour, 
                                 DATE_FORMAT(date,"%i") as minute, 
                                 if(WEEKDAY(date)<5, true, false) AS weekdays, 
                                 WEEKDAY(date) AS dayoftheweek, 
@@ -107,10 +108,13 @@ def main(granularity, start_date, end_date):
                             FROM 
                                 Samples 
                             WHERE 
-                                user_id != 2 AND date between "{0}" AND DATE_ADD("{0}", INTERVAL {5} SECOND) 
-                                AND co is not null and latitude is not null and longitude is not null 
+                                user_id != 2 AND date between "{0}" 
+                                AND DATE_ADD("{0}", INTERVAL {5} SECOND) 
+                                AND co is not null 
+                                and latitude is not null and longitude is not null 
                                 AND (latitude <= {1} AND latitude >= {2}) 
-                                AND (longitude >= {3} AND longitude <= {4}) AND co > 0 AND co < 60
+                                AND (longitude >= {3} AND longitude <= {4}) 
+                                AND co > 0 AND co < 60
                             ORDER BY
                                 date asc """.format(
                                     target_datetime, 
@@ -118,7 +122,6 @@ def main(granularity, start_date, end_date):
                                     interval_period
                                 )
 
-            import ipdb; ipdb.set_trace()
             df_mysql = data_from_db(select_str, verbose=True, exit_on_zero=False)
             if df_mysql is None:
                 print "No data returned for {0}".format(target_datetime)
@@ -144,7 +147,7 @@ def main(granularity, start_date, end_date):
             columns = df_mysql.columns.values
             vals = list(df_mysql.iloc[0])
             row_dict = dict(zip(columns, vals))
-            relevant_columns = ['time','weekdays','dayoftheweek']
+            relevant_columns = ['hour','minute', 'weekdays','dayoftheweek']
             data_common = ['"{}"'.format(row_dict['datetime'].strftime("%Y-%m-%d %H:00:00"))] + \
                     ['"{}"'.format(row_dict['date'])] + \
                     ["{}".format(row_dict[col]) for col in relevant_columns] + \
@@ -165,10 +168,11 @@ def main(granularity, start_date, end_date):
             fixed_samples_data = data_from_db(select_str, verbose=False, exit_on_zero=False)
 
             try:
-                assert len(fixed_samples_data) == 4
+                assert len(set(fixed_samples_data.location_name)) == 4
             except AssertionError:
                 print "error: 4 fixed station values not found for {}".format(target_datetime)
-                sys.exit()
+                errors.append(target_datetime)
+                continue
 
             FIXED_LOCATIONS = ['Chullora', 'Liverpool', 'Prospect', 'Rozelle']
             mean_fixed = np.nanmean([fixed_samples_data[fixed_samples_data.location_name==location]['co'].iloc[0] for location in FIXED_LOCATIONS])
@@ -191,7 +195,7 @@ def main(granularity, start_date, end_date):
                 
                 insert_str = """
                                  insert ignore into {0} 
-                                     (datetime, date, time, weekdays, 
+                                     (datetime, date, hour, minute, weekdays, 
                                      dayoftheweek, season, 
                                      grid_location_row, 
                                      grid_location_col, 
@@ -208,7 +212,9 @@ def main(granularity, start_date, end_date):
             print "At {0}, Number of rows considered in total: {1}".format(target_datetime, total_rows)
             # commit
             db.commit()
+
     print "No epoch count: {0} and Skip epoch counts {1}".format(no_epoch_count,skip_epoch_count)
+    print "dates with no complete fixed station data are {}".format(errors)
 
     # after all the rows have been populated with the original co, 
     # we need to populate the normalised value, mean and std

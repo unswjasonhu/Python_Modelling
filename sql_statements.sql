@@ -100,7 +100,7 @@ CREATE TABLE samplesGridDataMinutes
 (
 datetime datetime,
 date date,
-time int,
+hour int,
 minute int,
 weekdays int,
 dayoftheweek int,
@@ -117,7 +117,7 @@ co_mean decimal(10,5),
 co_stddev decimal(10,5),
 CONSTRAINT pk PRIMARY KEY (datetime, grid_location_row, grid_location_col)
 );
-CREATE INDEX date_samplesGridDataMinutes ON samplesGridDataMinutes (date);
+CREATE INDEX datetime_samplesGridDataMinutes ON samplesGridDataMinutes (datetime);
 
 /* To store mean and std values for the sensor network, and mean values for the fixed station. This is for part 1 and 2 */
 DROP TABLE IF EXISTS CV_values;

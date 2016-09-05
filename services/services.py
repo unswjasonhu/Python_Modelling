@@ -31,6 +31,14 @@ SERVICES_DIR = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 IMAGES_DIR = os.path.join(SERVICES_DIR, "static/heatmap_images/")
 
 
+def generate_data_from_model(input_datetime, input_date, lat, lon):
+    if input_datetime and not input_date:
+        return []
+    elif input_date and lat and lon:
+        return []
+    else:
+        return []
+
 def get_estimates_data_service(input_datetime=None, input_date=None, lat=None, lon=None):
     db = MySQLdb.connect("localhost","pollution","pollution","pollution_monitoring" )
 
@@ -52,12 +60,14 @@ def get_estimates_data_service(input_datetime=None, input_date=None, lat=None, l
         results = cursor.fetchall()
 
         if len(results) == 0:
+            results = generate_data_from_model(input_datetime, input_date, lat, lon)
             results = {"error":"no results found for datetime input. Please check your input again"}
-        else:
-            results = [(row[0], row[1], float(row[2])) for row in results]
-            results = zip(coords, results)
-            #print results
-            results = {input_datetime : results}
+
+        results = [(row[0], row[1], float(row[2])) for row in results]
+        results = zip(coords, results)
+        #print results
+        results = {input_datetime : results}
+
     elif input_date and lat and lon:
         #http://162.222.176.235/modeling/get_estimates_data?input_date=2015-09-11&lat=-33.92313&lon=150.98812
         #if this is slow, it's an index problem
@@ -70,6 +80,10 @@ def get_estimates_data_service(input_datetime=None, input_date=None, lat=None, l
             raise Exception("Error in : ", sql_str)
 
         results = cursor.fetchall()
+
+        if len(results):
+            results = generate_data_from_model(input_datetime, input_date, lat, lon)
+
         results = {input_date : [(row[0], float(row[1])) for row in results], "grid_location_row": grid_location_row, "grid_location_col": grid_location_col}
     else:
         results = {"error":"no output given the provided input parameters. Please check your input again"}
