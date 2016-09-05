@@ -94,9 +94,9 @@ CONSTRAINT pk PRIMARY KEY (datetime, grid_location_row, grid_location_col)
 );
 CREATE INDEX date_SVMEstimates ON SVMEstimates (date);
 
-/* To store SVM estimates data with minute granularity */
-DROP TABLE IF EXISTS SVMEstimatesMinute;
-CREATE TABLE SVMEstimatesMinute
+/* To store sampoleGridData data with minute granularity */
+DROP TABLE IF EXISTS samplesGridDataMinutes;
+CREATE TABLE samplesGridDataMinutes
 (
 datetime datetime,
 date date,
@@ -112,9 +112,12 @@ co_liverpool decimal(10,5),
 co_prospect decimal(10,5),
 co_rozelle decimal(10,5),
 co_original decimal(10,5),
+co decimal(10,5),
+co_mean decimal(10,5),
+co_stddev decimal(10,5),
 CONSTRAINT pk PRIMARY KEY (datetime, grid_location_row, grid_location_col)
 );
-CREATE INDEX date_SVMEstimatesMinute ON SVMEstimatesMinute (date);
+CREATE INDEX date_samplesGridDataMinutes ON samplesGridDataMinutes (date);
 
 /* To store mean and std values for the sensor network, and mean values for the fixed station. This is for part 1 and 2 */
 DROP TABLE IF EXISTS CV_values;

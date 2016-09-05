@@ -7,12 +7,47 @@ import sys
 from datetime import timedelta, datetime
 import numpy as np
 
-from ..resources import data_from_db, gridify_sydney
-from ..resources import NW_BOUND,SW_BOUND,NE_BOUND, create_mean_value_grid, get_season
+from os import path
+sys.path.append( path.dirname( path.dirname( path.abspath(__file__))))
+
+from resources import data_from_db, gridify_sydney
+from resources import NW_BOUND,SW_BOUND,NE_BOUND, create_mean_value_grid, get_season
 
 import pdb
 
-def main(granularity):
+
+def get_time_periods_with_sensor_data(start_date, end_date, data_table, interval):
+    """ Get the time periods to populate data for """
+    time_periods = []
+
+    db = MySQLdb.connect("localhost","pollution","pollution","pollution_monitoring" )
+    cursor = db.cursor()
+
+    # find the set of hours with sensor data
+    sensor_sql_str = """select distinct DATE_FORMAT(date, "%Y-%m-%d %H:") from Samples where date between "{0}" and "{1}" and user_id != 2;""".format(start_date, end_date)
+    cursor.execute(sensor_sql_str)
+    sensor_dates = set([x[0] for x in cursor.fetchall()])
+
+    # find the hours with fixed station data
+    fixed_sql_str = """select distinct DATE_FORMAT(date, "%Y-%m-%d %H:") from Samples where date between "{0}" and "{1}" and user_id = 2;""".format(start_date, end_date)
+    cursor.execute(fixed_sql_str)
+    fixed_dates = set([x[0] for x in cursor.fetchall()])
+
+    # find the hours already in the database
+    existing_sql_str = """select distinct datetime from {0} where datetime between "{1}" and "{2}";""".format(data_table, start_date, end_date)
+    cursor.execute(existing_sql_str)
+    existing_dates = set([x[0] for x in cursor.fetchall()])
+
+    time_periods = list((sensor_dates & fixed_dates) - existing_dates)
+
+    db.close()
+    if interval == 'minute':
+        return ["{}{:02d}:".format(t, i) for t in time_periods for i in xrange(60)]
+    else:
+        return time_periods
+
+
+def main(granularity, start_date, end_date):
     """
 
     SVM uses the known data, called SamplesGridData, training the model with this data
@@ -22,25 +57,10 @@ def main(granularity):
     """
 
     # Open database connection
-    db = MySQLdb.connect("localhost","pollution","pollution","pollution_monitoring" )
+    #db = MySQLdb.connect("localhost","pollution","pollution","pollution_monitoring" )
 
     # prepare a cursor object using cursor() method
-    cursor = db.cursor()
-
-    # get the oldest date
-    #sql_str = """select distinct date from Samples  where user_id = 2 order by date asc limit 1;"""
-    # start date
-    #cursor.execute(sql_str)
-    #start_date = cursor.fetchone()[0]
-    start_date = datetime(2013,3,1)
-
-    # get the newest date
-    #sql_str = """select distinct date from Samples  where user_id = 2 order by date desc limit 1;"""
-    # end date
-    #cursor.execute(sql_str)
-    #end_date = cursor.fetchone()[0]
-    #override 
-    end_date = datetime(2015,11,1)
+    #cursor = db.cursor()
 
     non_zero_grid_count_threshold = 10
 
@@ -48,6 +68,7 @@ def main(granularity):
     populate_initially = True
     populate_second_pass = True
 
+    interval = granularity['interval']
     data_table = granularity['data_table']
     interval_period = granularity['interval_period']
     date_format = granularity["date_format"]
@@ -59,6 +80,8 @@ def main(granularity):
     
     print "Start data and end date: {0} to {1}".format(start_date, end_date)
     print "Number of hours of data: {0}".format(epochs)
+
+    target_datetimes = get_time_periods_with_sensor_data(start_date, end_date, data_table, interval)
     
     target_date = start_date
     total_rows = 0
@@ -67,29 +90,7 @@ def main(granularity):
 
     #populate the first stage of the process for samplesGridData
     if populate_initially:
-        for _ in xrange(epochs):
-            #do a quick check to see if data for a datetime exists, skip if it does
-            sql_str = """select datetime from {0} where datetime="{1}" limit 1;""".format(data_table, target_date)
-            cursor.execute(sql_str)
-            if cursor.rowcount > 0:
-                skip_epoch_count += 1
-                target_date += timedelta(seconds=interval_period)
-                continue
-
-            #is there sensor data, skip if not
-            select_str = """select 
-                                * 
-                            from 
-                                Samples 
-                            where user_id != 2 and date like "{0}%" and co < 60 and co > 0 
-                                limit 1;""".format(target_date.strftime(date_format))
-            cursor.execute(select_str)
-            if cursor.rowcount == 0:
-                skip_epoch_count += 1
-                print "Skipped {0} due to lack of sensor data".format(target_date)
-                target_date += timedelta(seconds=interval_period)
-                continue;
-
+        for target_datetime in target_datetimes:
             #get data for an time period
             select_str = """SELECT 
                                 date as datetime, DATE_FORMAT(date,"%Y-%m-%d") AS date, 
@@ -223,34 +224,37 @@ def main(granularity):
             cursor.execute(update_sql)
         db.commit()
 
-    db.close()
+    #db.close()
     print "No epoch count: {0} and Skip epoch counts {1}".format(no_epoch_count,skip_epoch_count)
 
 
 if __name__ == "__main__":
-        print "Starting script"
-        start_time = datetime.now()
-        #table which has data inserted for model training
-        granularities = {
-            "hour": {
-                "interval": "hour",
-                "epoch_variable": 24,
-                "interval_period": 3600,
-                "date_format": "%Y-%m-%d %H",
-                "data_table": "samplesGridData",
-            },
-            "minute": {
-                "interval": "minute",
-                "epoch_variable": 24*60,
-                "interval_period": 60,
-                "date_format": "%Y-%m-%d %H:%i",
-                "data_table": "samplesGridData",
-            },
-        }
+    print "Starting script"
+    script_start_time = datetime.now()
+    start_date = datetime(2013,3,1)
+    end_date = datetime(2015,11,1)
 
-        main(granularities['hour'])
-        end_time = datetime.now()
-        time_taken = end_time - start_time
-        print "Time taken is ", time_taken.seconds
-        print "Script finished!"
+    #table which has data inserted for model training
+    granularities = {
+        "hour": {
+            "interval": "hour",
+            "epoch_variable": 24,
+            "interval_period": 3600,
+            "date_format": "%Y-%m-%d %H",
+            "data_table": "samplesGridData",
+        },
+        "minute": {
+            "interval": "minute",
+            "epoch_variable": 24*60,
+            "interval_period": 60,
+            "date_format": "%Y-%m-%d %H:%i",
+            "data_table": "samplesGridDataMinutes",
+        },
+    }
+
+    main(granularities['minute'], start_date, end_date)
+    script_end_time = datetime.now()
+    time_taken = script_end_time - script_start_time
+    print "Time taken is ", time_taken.seconds
+    print "Script finished!"
 
