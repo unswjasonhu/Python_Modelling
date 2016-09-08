@@ -55,7 +55,16 @@ def main():
             continue
 
         #get data for model input
-        sql_string = 'select date, location_name, if(WEEKDAY(date)<5, true, false) AS weekdays, WEEKDAY(date) AS dayoftheweek, co  from Samples where user_id=2 and date="{0}" and (location_name="Prospect" or location_name="Rozelle" or location_name="Liverpool" or location_name="Chullora") order by location_name;'.format(start_date)
+        sql_string = """select 
+            date, location_name, if(WEEKDAY(date)<5, true, false) AS weekdays, 
+            WEEKDAY(date) AS dayoftheweek, co  
+        from 
+            Samples
+        where 
+            user_id=2 and date="{0}" and 
+            (location_name="Prospect" or location_name="Rozelle" or location_name="Liverpool" or location_name="Chullora") 
+        order by 
+            location_name;""".format(start_date)
 
         fixed_samples_data = data_from_db(sql_string, exit_on_zero=False)
         try:
@@ -77,15 +86,20 @@ def main():
                 hour_feature = specific_hour
 
             FIXED_LOCATIONS = ['Chullora', 'Liverpool', 'Prospect', 'Rozelle']
-            mean_fixed = np.nanmean([fixed_samples_data[fixed_samples_data.location_name==location]['co'].iloc[0] for location in FIXED_LOCATIONS])
-            co_chullora = fixed_samples_data[fixed_samples_data.location_name=='Chullora']['co'].iloc[0] if not np.isnan(fixed_samples_data[fixed_samples_data.location_name=='Chullora']['co'].iloc[0]) else mean_fixed
-            co_liverpool = fixed_samples_data[fixed_samples_data.location_name=='Liverpool']['co'].iloc[0] if not np.isnan(fixed_samples_data[fixed_samples_data.location_name=='Liverpool']['co'].iloc[0]) else mean_fixed
-            co_prospect = fixed_samples_data[fixed_samples_data.location_name=='Prospect']['co'].iloc[0]  if not np.isnan(fixed_samples_data[fixed_samples_data.location_name=='Prospect']['co'].iloc[0]) else mean_fixed
-            co_rozelle = fixed_samples_data[fixed_samples_data.location_name=='Rozelle']['co'].iloc[0]  if not np.isnan(fixed_samples_data[fixed_samples_data.location_name=='Rozelle']['co'].iloc[0]) else mean_fixed
+            mean_fixed = np.nanmean([fixed_samples_data[fixed_samples_data.location_name==location]['co'].iloc[0] \
+                for location in FIXED_LOCATIONS])
+            co_chullora = fixed_samples_data[fixed_samples_data.location_name=='Chullora']['co'].iloc[0] \
+                if not np.isnan(fixed_samples_data[fixed_samples_data.location_name=='Chullora']['co'].iloc[0]) else mean_fixed
+            co_liverpool = fixed_samples_data[fixed_samples_data.location_name=='Liverpool']['co'].iloc[0] \
+                if not np.isnan(fixed_samples_data[fixed_samples_data.location_name=='Liverpool']['co'].iloc[0]) else mean_fixed
+            co_prospect = fixed_samples_data[fixed_samples_data.location_name=='Prospect']['co'].iloc[0]  \
+                if not np.isnan(fixed_samples_data[fixed_samples_data.location_name=='Prospect']['co'].iloc[0]) else mean_fixed
+            co_rozelle = fixed_samples_data[fixed_samples_data.location_name=='Rozelle']['co'].iloc[0]  \
+                if not np.isnan(fixed_samples_data[fixed_samples_data.location_name=='Rozelle']['co'].iloc[0]) else mean_fixed
 
             #prepare data to be inserted into svm_estimates table
             data = [fixed_samples_data['weekdays'].iloc[0], hour_feature, get_season(start_date), 0, 0, co_liverpool, co_prospect, co_chullora, co_rozelle]
-        except Exception,  ex:
+        except Exception as  ex:
             logObject.write("Error on {}; SQL Statement is {}; Error is str({})\n".format(start_date, sql_string, str(ex)));
             continue
 

@@ -78,8 +78,8 @@ def generate_plot():
     url = urllib.quote('/modeling/' + url)
     return jsonify({'success': url})
 
-app.debug=False
+app.debug=True
 
 if __name__ == '__main__':
-    app.run(debug=False)
+    app.run(debug=True)
 

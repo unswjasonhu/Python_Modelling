@@ -23,19 +23,20 @@ if __name__ == "__main__":
     src_folder = os.path.abspath(os.path.join(cmd_folder, os.pardir))
     sys.path.insert(0, src_folder)
 
-from resources import get_index, get_coords_sydney, create_heatmap
+from resources import get_index, get_coords_sydney, create_heatmap, predict_with_model
 # from resources import NW_BOUND,SW_BOUND,NE_BOUND,SE_BOUND
 
 estimates_table = "SVMEstimates"
 SERVICES_DIR = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 IMAGES_DIR = os.path.join(SERVICES_DIR, "static/heatmap_images/")
+MODEL_FILE_LOCATION = 'svm_current_model'
 
 
 def generate_data_from_model(input_datetime, input_date, lat, lon):
-    if input_datetime and not input_date:
-        return []
+    if input_datetime:
+        return predict_with_model(MODEL_FILE_LOCATION, input_datetime, input_date, lat, lon)
     elif input_date and lat and lon:
-        return []
+        return predict_with_model(MODEL_FILE_LOCATION, input_datetime, input_date, lat, lon)
     else:
         return []
 
@@ -46,7 +47,7 @@ def get_estimates_data_service(input_datetime=None, input_date=None, lat=None, l
     cursor = db.cursor()
     # return a grid back
     if input_datetime and not input_date:
-        #http://162.222.176.235/cgi-bin/get_estimates_data.py?input_datetime=2015-09-10%2010:00:00
+        #http://162.222.176.235/modeling/get_estimates_data?input_datetime=2016-09-10%2010:00:00
         #get the coords of sydney, correct and offset lat/lon to centre of each square in grid, for google maps
         coords = np.array(get_coords_sydney(centre_offset=False))
         coords = coords.reshape(10000,2)
@@ -61,7 +62,7 @@ def get_estimates_data_service(input_datetime=None, input_date=None, lat=None, l
 
         if len(results) == 0:
             results = generate_data_from_model(input_datetime, input_date, lat, lon)
-            results = {"error":"no results found for datetime input. Please check your input again"}
+            #results = {"error":"no results found for datetime input. Please check your input again"}
 
         results = [(row[0], row[1], float(row[2])) for row in results]
         results = zip(coords, results)
@@ -81,7 +82,7 @@ def get_estimates_data_service(input_datetime=None, input_date=None, lat=None, l
 
         results = cursor.fetchall()
 
-        if len(results):
+        if len(results) == 0:
             results = generate_data_from_model(input_datetime, input_date, lat, lon)
 
         results = {input_date : [(row[0], float(row[1])) for row in results], "grid_location_row": grid_location_row, "grid_location_col": grid_location_col}

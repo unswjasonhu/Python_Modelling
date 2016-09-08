@@ -4,10 +4,11 @@ from __future__ import division
 import sys
 from math import radians, sin, cos, sqrt, asin, atan2, degrees
 import time
+from datetime import datetime
 
 import MySQLdb
 import pandas as pd
-import pylab as pl
+import pickle
 import numpy as np
 import numpy.ma as ma
 #from scipy.spatial import cKDTree as KDTree
@@ -383,12 +384,6 @@ def data_from_db(sql_string, verbose = True, exit_on_zero=True):
         # disconnect from mysql
         mysql_cn.close()
 
-
-def minutify_data(df):
-    """ Convert the data into images at each minute interval"""
-    #TODO - Implement minutify
-    pass
-
 def convert_to_localtime(series):
     """Convert real time series into local times"""
     series = matplotlib.dates.date2num([time.localtime(x) for x in series])
@@ -516,6 +511,91 @@ def model_NN(time_start, time_end, name = "time_vs_co_averages"):
     #plt.ylim(df_mysql['avg_co'].min()-0.1, df_mysql['avg_co'].max()+0.1) 
     plt.savefig('{0}.png'.format(name))
     plt.close()
+
+
+def predict_with_model(model_file_location, input_datetime=None, input_date=None, lat=None, lon=None):
+    if (not input_datetime) and (not input_date and not lat and not lon):
+        #raise Exception('hello')
+        return []
+    #load current model
+    fileObject = open(model_file_location,'rb')
+    pipeline = pickle.load(fileObject)
+
+    #get data for model input
+    sql_string = """select 
+            date, location_name, if(WEEKDAY(date)<5, true, false) AS weekdays, 
+            WEEKDAY(date) AS dayoftheweek, co  
+        from 
+            Samples
+        where 
+            user_id=2 and date like "{0}%" and 
+            (location_name="Prospect" or location_name="Rozelle" or location_name="Liverpool" or location_name="Chullora") 
+        order by 
+            location_name;""".format(input_datetime or input_date)
+
+    fixed_samples_data = data_from_db(sql_string, exit_on_zero=False)
+
+    try:
+        #assert that more than 4 stations need to be returned
+        #sometimes 8 rows are returned (duplicate records..)
+        assert fixed_samples_data is not None and len(fixed_samples_data) >= 4
+    except AssertionError as e:
+        #print("Assertion on number of rows returned failed")
+        # logObject.write("No rows on {0}\n".format(start_date));
+        return []
+        # raise e
+
+    try:
+
+        FIXED_LOCATIONS = ['Chullora', 'Liverpool', 'Prospect', 'Rozelle']
+        mean_fixed = np.nanmean([fixed_samples_data[fixed_samples_data.location_name==location]['co'].iloc[0] \
+            for location in FIXED_LOCATIONS])
+        co_chullora = fixed_samples_data[fixed_samples_data.location_name=='Chullora']['co'].iloc[0] \
+            if not np.isnan(fixed_samples_data[fixed_samples_data.location_name=='Chullora']['co'].iloc[0]) else mean_fixed
+        co_liverpool = fixed_samples_data[fixed_samples_data.location_name=='Liverpool']['co'].iloc[0] \
+            if not np.isnan(fixed_samples_data[fixed_samples_data.location_name=='Liverpool']['co'].iloc[0]) else mean_fixed
+        co_prospect = fixed_samples_data[fixed_samples_data.location_name=='Prospect']['co'].iloc[0]  \
+            if not np.isnan(fixed_samples_data[fixed_samples_data.location_name=='Prospect']['co'].iloc[0]) else mean_fixed
+        co_rozelle = fixed_samples_data[fixed_samples_data.location_name=='Rozelle']['co'].iloc[0]  \
+            if not np.isnan(fixed_samples_data[fixed_samples_data.location_name=='Rozelle']['co'].iloc[0]) else mean_fixed
+    except Exception as  e:
+        #logObject.write("Error on {}; SQL Statement is {}; Error is str({})\n".format(start_date, sql_string, str(ex)));
+        return []
+        # raise e
+
+    if input_datetime:
+        input_datetime = datetime.strptime(input_datetime, "%Y-%m-%d %H:%M:%S")
+        specific_hour = input_datetime.hour
+        hour_feature = classify_hour(specific_hour)
+
+        # Need the fixed station values
+        data = [fixed_samples_data['weekdays'].iloc[0], hour_feature, get_season(input_datetime), 0, 0, co_liverpool, co_prospect, co_chullora, co_rozelle]
+        X = np.float64([data])
+        y_vals = []
+
+        #go through 100x100 grid pixels
+        for row in xrange(100):
+            for col in xrange(100):
+                X[0][3] = row 
+                X[0][4] = col
+                y_vals.append((row, col,  5.7464*pipeline.predict(X)[0]+3.48652))
+
+        return y_vals
+    else:
+        # Need the fixed station values
+        input_date = datetime.strptime(input_date, "%Y-%m-%d")
+        row, col = get_index(lat, lon)
+        y_vals = []
+
+        for hour in xrange(8,24):
+            hour_feature = classify_hour(hour)
+            data = [fixed_samples_data['weekdays'].iloc[0], hour_feature, get_season(input_date), row, col, co_liverpool, co_prospect, co_chullora, co_rozelle]
+            X = np.float64([data])
+            y_vals.append((hour, 5.7464*pipeline.predict(X)[0]+3.48652))
+
+        return y_vals
+
+
 
 ########################################################################
 # Main starts here!
