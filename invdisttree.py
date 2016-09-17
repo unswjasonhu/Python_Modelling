@@ -113,12 +113,12 @@ if __name__ == "__main__":
     cycle = .25
     seed = 1
 
-    exec "\n".join( sys.argv[1:] )  # python this.py N= ...
+    exec("\n".join( sys.argv[1:] ))  # python this.py N= ...
     np.random.seed(seed )
     np.set_printoptions( 3, threshold=100, suppress=True )  # .3f
 
-    print "\nInvdisttree:  N %d  Ndim %d  Nask %d  Nnear %d  leafsize %d  eps %.2g  p %.2g" % (
-        N, Ndim, Nask, Nnear, leafsize, eps, p)
+    print("\nInvdisttree:  N %d  Ndim %d  Nask %d  Nnear %d  leafsize %d  eps %.2g  p %.2g" % (
+        N, Ndim, Nask, Nnear, leafsize, eps, p))
 
     def terrain(x):
         """ ~ rolling hills """
@@ -132,12 +132,12 @@ if __name__ == "__main__":
     invdisttree = Invdisttree( known, z, leafsize=leafsize, stat=1 )
     interpol = invdisttree( ask, nnear=Nnear, eps=eps, p=p )
 
-    print "average distances to nearest points: %s" % \
-        np.mean( invdisttree.distances, axis=0 )
-    print "average weights: %s" % (invdisttree.wsum / invdisttree.wn)
+    print("average distances to nearest points: %s" % \
+        np.mean( invdisttree.distances, axis=0 ))
+    print("average weights: %s" % (invdisttree.wsum / invdisttree.wn))
         # see Wikipedia Zipf's law
     err = np.abs( terrain(ask) - interpol )
-    print "average |terrain() - interpolated|: %.2g" % np.mean(err)
+    print("average |terrain() - interpolated|: %.2g" % np.mean(err))
 
     # print "interpolate a single point: %.2g" % \
     #     invdisttree( known[0], nnear=Nnear, eps=eps )
