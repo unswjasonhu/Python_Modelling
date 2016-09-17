@@ -38,7 +38,7 @@ IMAGES_BASE_DIR = "../images"
 STATIONARY = [2]
 NODE_OLD = [6]
 #in the last two years
-NODE_NEW = range(7,12)
+NODE_NEW = list(range(7,12))
 
 #all node sensor data
 NODE = NODE_OLD + NODE_NEW
@@ -329,8 +329,8 @@ def gridify_sydney(df, heatmap_name = IMAGES_BASE_DIR + "/before_interpolation_a
 
     sydney_grid = np.array(sydney_grid)
     if verbose:
-        print "Before interpolation, after averaging: Min, max, mean: {0}, {1}, {2}".format(np.nanmin(sydney_grid), np.nanmax(sydney_grid), np.nanmean(sydney_grid))
-        print "Database values:{0}, fill rate:{1}".format(count,count/(GRID_RES*GRID_RES)*100)
+        print("Before interpolation, after averaging: Min, max, mean: {0}, {1}, {2}".format(np.nanmin(sydney_grid), np.nanmax(sydney_grid), np.nanmean(sydney_grid)))
+        print("Database values:{0}, fill rate:{1}".format(count,count/(GRID_RES*GRID_RES)*100))
     if heatmap:
         create_heatmap(sydney_grid, heatmap_name)
     
@@ -342,7 +342,7 @@ def interpol_general(known, z, ask):
 #    (interpol, interpol_name) = griddata_interpol(known, z, ask)
     (interpol, interpol_name) = idw_interpol(known, z, ask, len(z))
 
-    print "Interpolation values: Min, max, mean and range: {0}, {1}, {2}, {3}".format(interpol.min(), interpol.max(), interpol.mean(),  interpol.max() - interpol.min())
+    print("Interpolation values: Min, max, mean and range: {0}, {1}, {2}, {3}".format(interpol.min(), interpol.max(), interpol.mean(),  interpol.max() - interpol.min()))
     create_heatmap(interpol, IMAGES_BASE_DIR + "/after_" + interpol_name + "_interpolation")
     create_mesh(interpol, IMAGES_BASE_DIR + "/after_mesh_" + interpol_name + "_interpolation")
 
@@ -370,15 +370,15 @@ def data_from_db(sql_string, verbose = True, exit_on_zero=True):
         df_mysql =  pd.read_sql(sql_string, con=mysql_cn)
         if len(df_mysql.index) == 0:
             if exit_on_zero:
-                print "No rows returned. Exiting..."
+                print("No rows returned. Exiting...")
                 sys.exit()
             else:
                 return None
         if verbose:
-            print "{0} rows returned".format(len(df_mysql.index))
+            print("{0} rows returned".format(len(df_mysql.index)))
         return df_mysql
-    except Exception, e:
-        print str(e)
+    except Exception as e:
+        print(str(e))
         sys.exit()
     finally:
         # disconnect from mysql
@@ -387,7 +387,7 @@ def data_from_db(sql_string, verbose = True, exit_on_zero=True):
 def convert_to_localtime(series):
     """Convert real time series into local times"""
     series = matplotlib.dates.date2num([time.localtime(x) for x in series])
-    print series
+    print(series)
     return series
 
 def model_NN(time_start, time_end, name = "time_vs_co_averages"):
@@ -467,7 +467,7 @@ def model_NN(time_start, time_end, name = "time_vs_co_averages"):
             'nn__hidden0__type' : best_hidden_layer_type
         }
         pipeline.set_params(**params) 
-        print gs.best_params_
+        print(gs.best_params_)
     #pipeline = Regressor(
     #    layers=[
     #	Layer("Tanh",units=10),
@@ -478,7 +478,7 @@ def model_NN(time_start, time_end, name = "time_vs_co_averages"):
     #    verbose=True)
     
     pipeline.fit(X_train, y_train)
-    print pipeline.get_params()
+    print(pipeline.get_params())
     y_pred = pipeline.predict(X_train)
     
     #nn = Regressor(
@@ -620,7 +620,7 @@ if __name__ == "__main__":
             #date_test_str = date_test.strftime('%Y-%m-%d')
             date_test_str = "2015-09-03"
                 
-        print "date used is: " + date_test_str
+        print("date used is: " + date_test_str)
 
         ############
         #Get the spatial data for this date
@@ -651,7 +651,7 @@ if __name__ == "__main__":
         #print "Rows with Lon NULL are: {0}".format(len(df_mysql[df_mysql["longitude"].isnull()]))
         #print "Rows with erroreous values are: {0}, sanity value is:  {1}".format(len(df_mysql[df_mysql["co"] > data_sanity]), data_sanity)
 
-        print "Data from DB: Min, max and range: {0}, {1}, {2}".format(co_col.min(), co_col.max(), co_col.max() - co_col.min())
+        print("Data from DB: Min, max and range: {0}, {1}, {2}".format(co_col.min(), co_col.max(), co_col.max() - co_col.min()))
 
         #print df_mysql.head(10)
         #create a grid of sydney
@@ -670,7 +670,7 @@ if __name__ == "__main__":
     ############
     if NN:
         # hard code the date_times
-        print "Modelling using NN"
+        print("Modelling using NN")
         #date_time_start = "2015-09-03 07:30"
         #date_time_end = "2015-09-03 10:00"
         date_time_start = "2015-09-03 10:30"
