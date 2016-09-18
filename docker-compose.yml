@@ -6,10 +6,13 @@ services:
             - .:/code
         ports:
             - "5000:5000"
-        depends_on:
+        links:
             - db
     db:
         image: mysql:5.5.52
         environment:
             - MYSQL_ALLOW_EMPTY_PASSWORD=yes
+            - MYSQL_DATABASE=pollution_monitoring
+            - MYSQL_USER=pollution
+            - MYSQL_PASSWORD=pollution
 

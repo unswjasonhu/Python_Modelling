@@ -3,7 +3,7 @@ var heatmap, image;
 
 function getPlotUrl() {
     var datetime = date.value + ' ' + time.value;
-    var url ='/modeling/generate_plot?input_datetime=' + datetime;
+    var url ='/generate_plot?input_datetime=' + datetime;
     var plotUrl = '';
     $.ajax({
         url: url,
@@ -20,7 +20,7 @@ function getPlotUrl() {
 
 function getGridData() {
     var datetime = date.value + '_' + time.value;
-    var url ='/modeling/get_estimates_data?input_datetime=' + datetime;
+    var url ='/get_estimates_data?input_datetime=' + datetime;
     var dataPoints = []
     var values = [];
     $.ajax({
@@ -55,7 +55,7 @@ function getGridData() {
 
 function drawChart() {
     var colvlArray = [];
-    var charturl = '/modeling/get_estimates_data?input_date=' + date.value +'&lat=' +lat.value + '&lon=' + lng.value;
+    var charturl = '/get_estimates_data?input_date=' + date.value +'&lat=' +lat.value + '&lon=' + lng.value;
     console.log(charturl);
     $.ajax({
         url: charturl,

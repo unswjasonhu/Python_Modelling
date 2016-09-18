@@ -10,6 +10,5 @@ RUN apt-get install -y python3-dev libmysqlclient-dev python-matplotlib libmysql
 
 RUN pip install -r requirements/requirements.txt
 
-CMD python webapp.py
-
-EXPOSE 8080
+ENTRYPOINT ["python"]
+CMD ["webapp.py"]

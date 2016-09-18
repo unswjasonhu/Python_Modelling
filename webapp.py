@@ -81,5 +81,8 @@ def generate_plot():
 app.debug=True
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    if app.debug:
+        app.run(debug=True, host='0.0.0.0')
+    else:
+        app.run(debug=True)
 
