@@ -9,7 +9,7 @@ services:
         links:
             - db
         environment:
-            - FLASK_SETTINGS=settings.cfg
+            - FLASK_SETTINGS=../settings.cfg
     db:
         image: mysql:5.5.52
         environment:

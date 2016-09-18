@@ -1,6 +1,6 @@
 FROM python:latest
 
-ADD . /code
+ADD app /code
 
 WORKDIR /code
 
@@ -11,4 +11,4 @@ RUN apt-get install -y python3-dev libmysqlclient-dev python-matplotlib libmysql
 RUN pip install -r requirements/requirements.txt
 
 ENTRYPOINT ["python"]
-CMD ["webapp.py"]
+CMD ["app/webapp.py"]

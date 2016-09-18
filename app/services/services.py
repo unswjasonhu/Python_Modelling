@@ -24,7 +24,6 @@ if __name__ == "__main__":
     sys.path.insert(0, src_folder)
 
 from resources import get_index, get_coords_sydney, create_heatmap, predict_with_model
-# from resources import NW_BOUND,SW_BOUND,NE_BOUND,SE_BOUND
 
 estimates_table = "SVMEstimates"
 SERVICES_DIR = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))

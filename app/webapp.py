@@ -7,6 +7,7 @@ import urllib
 
 from services.services import get_estimates_data_service, generate_2d_plot
 
+import sys
 
 app = Flask(__name__, static_url_path='')
 
