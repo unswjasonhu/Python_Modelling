@@ -7,7 +7,22 @@ import urllib
 
 from services.services import get_estimates_data_service, generate_2d_plot
 
+
 app = Flask(__name__, static_url_path='')
+
+class Config(object):
+    DEBUG = False
+    TESTING = False
+
+class ProductionConfig(Config):
+    DATABASE_URI = 'localhost'
+
+class DevelopmentConfig(Config):
+    DEBUG = True
+    DATABASE_URI = 'db'
+
+class TestingConfig(Config):
+    TESTING = True
 
 @app.route('/')
 def index():
@@ -78,9 +93,15 @@ def generate_plot():
     url = urllib.quote('/modeling/' + url)
     return jsonify({'success': url})
 
-app.debug=True
-
 if __name__ == '__main__':
+    app.debug=True
+
+    app.config.from_envvar('FLASK_SETTINGS')
+
+    if app.config['ENVIRONMENT'] == 'dev':
+        app.config.from_object(DevelopmentConfig)
+        print('App variables are:', app.__dict__)
+
     if app.debug:
         app.run(debug=True, host='0.0.0.0')
     else:
