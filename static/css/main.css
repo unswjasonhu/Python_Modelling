@@ -1,0 +1,116 @@
+body {
+	font-family: "Helvetica", sans-serif;
+	font-size: 14px;
+	margin: 0px;
+	background-color: #fffde2;
+	color: #222;
+}
+
+#page_box {
+	width: 800px;
+	margin: 0px auto;
+}
+
+#header {
+	padding-top: 18px;
+/* 	background-color: #8fc2f8; */
+}
+
+#header h2 {
+	margin: 0 0 0 0px;
+	font-size: 63px;
+	color: #4da13d;
+}
+
+#menu {
+	margin: 5px 0px 0px 0px;
+	padding: 0px 0px 0px 0px;
+}
+
+#main_content_box {
+	margin: 24px 0px 0px 0px;
+	padding: 10px 35px;
+	background-color: white;
+	
+	border-radius: 8px;
+	-moz-border-radius: 8px;
+	-webkit-border-radius: 8px;
+	
+	border: 3px solid #754926;
+}
+
+p {
+	line-height: 20px;
+}
+
+li {
+	padding-top: 5px;
+}
+
+.logo {
+	float:right;
+	position:relative;
+	top:-104px;
+}
+
+#footer {
+	margin: 15px 0px 15px 0px;
+
+	text-align: center;
+	font-size: 11px;
+	color: #aaa;
+}
+
+
+.nav_menu {
+	display: inline-block;
+	background-color: #0080ff;
+	padding: 10px 20px 10px 20px;
+	font-size: 16px;
+	
+	border-radius: 10px;
+	-moz-border-radius:10px;
+	-webkit-border-radius: 10px;
+}
+
+.nav_menu a {
+	color: white;
+	text-decoration: none;
+	font-weight: bold;
+	padding:10px 10px;
+}
+
+.nav_menu a:hover, .nav_menu a:active {
+	background-color: #a1ccf9;
+	color: #335;
+}
+
+.nav_menu li {
+	float: left;
+	list-style: none;
+/* 	margin-right: 10px; */
+	display: inline-block;
+	padding: 0px;
+}
+
+.nav_menu ul {
+	padding: 0px 0px 0px 0px;
+	margin: 0px;
+}
+
+#login_menu {
+	display: inline-block;
+	float: right;
+	margin-right:4px;
+	margin-top:13px;
+}
+
+a {
+	color: #0e4ea4;
+	text-decoration: none;
+	font-weight: bold;
+}
+
+a:hover {
+	color: #999999;
+}
