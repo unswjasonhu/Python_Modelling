@@ -11,29 +11,36 @@ import sys
 
 app = Flask(__name__, static_url_path='')
 
+
 class Config(object):
     DEBUG = False
     TESTING = False
 
+
 class ProductionConfig(Config):
     DATABASE_URI = 'localhost'
+
 
 class DevelopmentConfig(Config):
     DEBUG = True
     DATABASE_URI = 'db'
 
+
 class TestingConfig(Config):
     TESTING = True
+
 
 @app.route('/')
 def index():
     return render_template('index.html')
 
+
 @app.route('/dev')
 def dev():
     return render_template('index_dev.html')
 
-@app.route('/get_estimates_data', methods = ['GET'])
+
+@app.route('/get_estimates_data', methods=['GET'])
 def get_estimates_data():
     input_datetime = request.args.get('input_datetime')
     input_date = request.args.get('input_date')
@@ -50,17 +57,18 @@ def get_estimates_data():
     #lat = -33.92313
     #lon = 150.98812
 
-    #print input_datetime
+    # print input_datetime
     #input_datetime = "2015-09-03 10:00:00"
 
-    body=[]
+    body = []
     if input_datetime:
         try:
             time.strptime(input_datetime, "%Y-%m-%d %H:%M:%S")
         except ValueError:
             return jsonify({'error': 'Invalid input_datetime given'})
         else:
-            body = get_estimates_data_service(input_datetime=input_datetime, input_date=input_date, lat=lat, lon=lon)
+            body = get_estimates_data_service(
+                input_datetime=input_datetime, input_date=input_date, lat=lat, lon=lon)
 
     #input_date = "2015-08-05"
     if input_date:
@@ -69,18 +77,19 @@ def get_estimates_data():
         except ValueError:
             return jsonify({'error': 'Invalid input_date given'})
         else:
-            body = get_estimates_data_service(input_datetime=input_datetime, input_date=input_date, lat=lat, lon=lon)
+            body = get_estimates_data_service(
+                input_datetime=input_datetime, input_date=input_date, lat=lat, lon=lon)
 
     return jsonify(body)
 
 
-@app.route('/generate_plot', methods= ['GET'])
+@app.route('/generate_plot', methods=['GET'])
 def generate_plot():
     input_datetime = request.args.get('input_datetime')
 
     try:
         time.strptime(input_datetime, "%Y-%m-%d %H:%M:%S")
-        #can use create create_heatmap to generate an image
+        # can use create create_heatmap to generate an image
         plot_name = generate_2d_plot(input_datetime)
     except ValueError:
         return jsonify({'error': 'Invalid input_datetime given'})
@@ -95,7 +104,7 @@ def generate_plot():
     return jsonify({'success': url})
 
 if __name__ == '__main__':
-    app.debug=True
+    app.debug = True
 
     app.config.from_envvar('FLASK_SETTINGS')
 
@@ -107,4 +116,3 @@ if __name__ == '__main__':
         app.run(debug=True, host='0.0.0.0')
     else:
         app.run(debug=True)
-
