@@ -7,8 +7,6 @@ import urllib
 
 from services.services import get_estimates_data_service, generate_2d_plot
 
-import sys
-
 app = Flask(__name__, static_url_path='')
 
 
@@ -54,12 +52,6 @@ def get_estimates_data():
     except ValueError:
         return jsonify({'error': 'Malformed lat or lon given given'})
 
-    #lat = -33.92313
-    #lon = 150.98812
-
-    # print input_datetime
-    #input_datetime = "2015-09-03 10:00:00"
-
     body = []
     if input_datetime:
         try:
@@ -67,18 +59,21 @@ def get_estimates_data():
         except ValueError:
             return jsonify({'error': 'Invalid input_datetime given'})
         else:
-            body = get_estimates_data_service(
-                input_datetime=input_datetime, input_date=input_date, lat=lat, lon=lon)
+            body = get_estimates_data_service(input_datetime=input_datetime,
+                                              input_date=input_date,
+                                              lat=lat,
+                                              lon=lon)
 
-    #input_date = "2015-08-05"
     if input_date:
         try:
             time.strptime(input_date, "%Y-%m-%d")
         except ValueError:
             return jsonify({'error': 'Invalid input_date given'})
         else:
-            body = get_estimates_data_service(
-                input_datetime=input_datetime, input_date=input_date, lat=lat, lon=lon)
+            body = get_estimates_data_service(input_datetime=input_datetime,
+                                              input_date=input_date,
+                                              lat=lat,
+                                              lon=lon)
 
     return jsonify(body)
 

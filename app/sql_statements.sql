@@ -19,8 +19,8 @@ CONSTRAINT pk PRIMARY KEY (datetime, location_name)
 CREATE INDEX date_FixedSamples ON FixedSamples (date);
 
 /* To store Estimates for hours in all grid locations. i.e. 10,000 rows per hour, for a 100x100 grid of Sydney */
-DROP TABLE IF EXISTS Estimates; 
-CREATE TABLE Estimates 
+DROP TABLE IF EXISTS Estimates;
+CREATE TABLE Estimates
 (
 datetime datetime,
 date date,
@@ -35,7 +35,7 @@ CREATE INDEX date_Estimates ON Estimates (date);
 
 /* To store Estimates for hours in all grid locations, subtracted by the mean. i.e. 10,000 rows per hour, for a 100x100 grid of Sydney */
 DROP TABLE IF EXISTS Estimates_zeroMean;
-CREATE TABLE Estimates_zeroMean 
+CREATE TABLE Estimates_zeroMean
 (
 datetime datetime,
 date date,
@@ -140,7 +140,7 @@ CREATE INDEX date_CV_values ON CV_values (date);
 
 
 /* Data to feed into the Weekday Model */
-DROP TABLE IF EXISTS WeekdayModelData; 
+DROP TABLE IF EXISTS WeekdayModelData;
 CREATE TABLE WeekdayModelData
 (
 datetime datetime,
@@ -161,7 +161,7 @@ CONSTRAINT pk PRIMARY KEY (datetime, grid_location)
 
 
 /* Data to feed into the Weekend Model */
-DROP TABLE IF EXISTS WeekendModelData; 
+DROP TABLE IF EXISTS WeekendModelData;
 CREATE TABLE WeekendModelData
 (
 datetime datetime,
