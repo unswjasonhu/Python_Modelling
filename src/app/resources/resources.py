@@ -19,7 +19,7 @@ from sklearn.cross_validation import train_test_split
 from sklearn import preprocessing
 from sklearn.grid_search import GridSearchCV
 
-from invdisttree import Invdisttree
+from .invdisttree import Invdisttree
 
 np.set_printoptions(threshold='nan')
 

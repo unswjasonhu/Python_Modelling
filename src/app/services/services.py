@@ -6,24 +6,25 @@ import os
 import inspect
 import numpy as np
 import MySQLdb
-from resources import get_index, get_coords_sydney, create_heatmap, predict_with_model
+from app.resources.resources import get_index, get_coords_sydney, create_heatmap, predict_with_model
 
-cmd_folder = os.path.realpath(os.path.abspath(
-    os.path.split(inspect.getfile(inspect.currentframe()))[0]))
-
-if cmd_folder not in sys.path:
-    sys.path.insert(0, cmd_folder)
-
-# use this if you want to include modules from a subfolder
-cmd_subfolder = os.path.realpath(os.path.abspath(os.path.join(
-    os.path.split(inspect.getfile(inspect.currentframe()))[0], "comp4335")))
-if cmd_subfolder not in sys.path:
-    sys.path.insert(0, cmd_subfolder)
-
-# add this if run as a script for resources
-if __name__ == "__main__":
-    src_folder = os.path.abspath(os.path.join(cmd_folder, os.pardir))
-    sys.path.insert(0, src_folder)
+## realpath() will make your script run, even if you symlink it :) 
+#cmd_folder = os.path.realpath(os.path.abspath(os.path.split(inspect.getfile( inspect.currentframe() ))[0]))
+#
+## print cmd_folder
+#if cmd_folder not in sys.path:
+#    sys.path.insert(0, cmd_folder)
+#
+## use this if you want to include modules from a subfolder
+#cmd_subfolder = os.path.realpath(os.path.abspath(os.path.join(os.path.split(inspect.getfile( inspect.currentframe() ))[0],"comp4335")))
+#if cmd_subfolder not in sys.path:
+#    #print cmd_subfolder
+#    sys.path.insert(0, cmd_subfolder)
+#
+## add this if run as a script for resources
+#if __name__ == "__main__":
+#    src_folder = os.path.abspath(os.path.join(cmd_folder, os.pardir))
+#    sys.path.insert(0, src_folder)
 
 
 ESTIMATES_TABLE_NAME = "SVMEstimates"

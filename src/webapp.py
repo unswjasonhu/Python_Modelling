@@ -4,28 +4,21 @@ from flask import Flask
 from flask import render_template, request, jsonify
 import re
 import urllib
+import config
 
-from services.services import get_estimates_data_service, generate_2d_plot
+import os
+import sys
+import inspect
+
+# Add folder to path 
+cmd_folder = os.path.realpath(os.path.abspath(os.path.split(inspect.getfile( inspect.currentframe() ))[0]))
+
+if cmd_folder not in sys.path:
+    sys.path.insert(0, cmd_folder)
+
+from app.services.services import get_estimates_data_service, generate_2d_plot
 
 app = Flask(__name__, static_url_path='')
-
-
-class Config(object):
-    DEBUG = False
-    TESTING = False
-
-
-class ProductionConfig(Config):
-    DATABASE_URI = 'localhost'
-
-
-class DevelopmentConfig(Config):
-    DEBUG = True
-    DATABASE_URI = 'db'
-
-
-class TestingConfig(Config):
-    TESTING = True
 
 
 @app.route('/')
@@ -101,11 +94,15 @@ def generate_plot():
 if __name__ == '__main__':
     app.debug = True
 
-    app.config.from_envvar('FLASK_SETTINGS')
+    print('App variables are:', app.__dict__)
+    environment = os.environ['ENVIRONMENT'] or 'prod'
 
-    if app.config['ENVIRONMENT'] == 'dev':
-        app.config.from_object(DevelopmentConfig)
-        print('App variables are:', app.__dict__)
+    if environment == 'dev':
+        app.config.from_object(config.DevelopmentConfig)
+    elif environment == 'prod':
+        app.config.from_object(config.ProductionConfig)
+
+    print('App variables are:', app.__dict__)
 
     if app.debug:
         app.run(debug=True, host='0.0.0.0')

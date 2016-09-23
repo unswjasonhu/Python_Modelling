@@ -1,8 +1,10 @@
 FROM python:latest
 
-ADD app /code
+ADD src /code
 
 WORKDIR /code
+
+RUN export PYTHONPATH=/code/src && echo "python path is" $PYTHONPATH
 
 RUN apt-get update
 
@@ -11,4 +13,4 @@ RUN apt-get install -y python3-dev libmysqlclient-dev python-matplotlib libmysql
 RUN pip install -r requirements/requirements.txt
 
 ENTRYPOINT ["python"]
-CMD ["app/webapp.py"]
+CMD ["src/webapp.py"]
