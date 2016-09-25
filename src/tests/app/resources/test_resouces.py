@@ -26,8 +26,7 @@ class TestModellingNNClass(CustomTestCase):
     @mock.patch('app.resources.resources.get_NN_model_data', rv=None)
     def test_model_NN(self, mocked):
         """  Mocking return values from database """
-        import os
-        print(os.environ)
+        pass        
 
 
 # runs the unit tests in the module
