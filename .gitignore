@@ -1,2 +1,4 @@
 *.pyc
 static/heatmap_images/
+htmlcov
+.coverage

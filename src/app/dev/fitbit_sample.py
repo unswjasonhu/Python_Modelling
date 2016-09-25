@@ -37,6 +37,6 @@ authd_client = fitbit.Fitbit(consumer_key, consumer_secret, oauth2=False, resour
 fitbit_stats = authd_client.time_series("activities/steps", base_date='today', period='1d', end_date=None)
 
 for key in fitbit_stats.keys():
-    print key, fitbit_stats[key]
+    print(key, fitbit_stats[key])
 
 #print authd_client.sleep()

@@ -34,7 +34,7 @@ def main():
     end_date = datetime(2015,10,1)
 
     epochs =  ((end_date - start_date).days/7 +1)
-    print "Number of weeks of data: {0}".format(epochs)
+    print("Number of weeks of data: {0}".format(epochs))
     #filtered out lat/lon null and co is null
     first_date = start_date
     # for each week
@@ -51,14 +51,14 @@ def main():
         cursor.execute(select_str)
         results = cursor.fetchall()
         total_rows += len(results)
-        print "Number of rows of Samples considered in total: {0}".format(total_rows)
+        print("Number of rows of Samples considered in total: {0}".format(total_rows))
         for result in results:
             #check if the date has associated sensor data
             input_datetime = result[0]
             select_str = """select * from Samples where user_id != 2 and date like "{0}%" and co < 60 and co > 0 limit 1;""".format(input_datetime.strftime("%Y-%m-%d %H"))
             cursor.execute(select_str)
             if cursor.rowcount == 0:
-                print "Skipped {0} due to lack of sensor data".format(input_datetime)
+                print("Skipped {0} due to lack of sensor data".format(input_datetime))
                 continue;
             agg_for_date = agg_results[input_datetime]
             data = ['"{0}"'.format(result[x]) for x in xrange(2)] + [result[x] for x in xrange(2,5)] + [get_flattened_index(float(result[5]), float(result[6]))] + ['"{0}"'.format(result[7])] + [result[8] , agg_for_date]
@@ -72,7 +72,7 @@ def main():
     db.close()
         
 if __name__ == "__main__":
-        print "Starting script"
+        print("Starting script")
         # execute only if run as a script
         main()
-        print "Script finished!"
+        print("Script finished!")

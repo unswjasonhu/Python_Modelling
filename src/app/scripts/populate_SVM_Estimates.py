@@ -120,7 +120,7 @@ def main():
                 try:
                     cursor.execute(insert_str)
                 except:
-                    print insert_str
+                    print(insert_str)
                     pdb.set_trace()
         #commit the db every 10000 rows
         db.commit()

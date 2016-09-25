@@ -86,8 +86,8 @@ def main(granularity, start_date, end_date):
     #epochs are time period to iterate over
     epochs =  len(target_datetimes)
 
-    print "Start data and end date: {} to {}".format(start_date, end_date)
-    print "Number of time periods of data: {}, granularity is {}".format(epochs, interval)
+    print("Start data and end date: {} to {}".format(start_date, end_date))
+    print("Number of time periods of data: {}, granularity is {}".format(epochs, interval))
 
     db = MySQLdb.connect("localhost","pollution","pollution","pollution_monitoring" )
     cursor = db.cursor()
@@ -124,7 +124,7 @@ def main(granularity, start_date, end_date):
 
             df_mysql = data_from_db(select_str, verbose=True, exit_on_zero=False)
             if df_mysql is None:
-                print "No data returned for {0}".format(target_datetime)
+                print("No data returned for {0}".format(target_datetime))
                 no_epoch_count += 1
                 continue
 
@@ -134,7 +134,7 @@ def main(granularity, start_date, end_date):
             #discount grid if it doesn't have enough pixels (i.e. less than threshold)
             if non_zero_grid_count < non_zero_grid_count_threshold:
                 skip_epoch_count += 1
-                print "Skipped {0} due to non zero grid count less than threshold".format(target_datetime)
+                print("Skipped {0} due to non zero grid count less than threshold".format(target_datetime))
                 continue
 
             #interpolate to get a grid
@@ -170,7 +170,7 @@ def main(granularity, start_date, end_date):
             try:
                 assert len(set(fixed_samples_data.location_name)) == 4
             except AssertionError:
-                print "error: 4 fixed station values not found for {}".format(target_datetime)
+                print("error: 4 fixed station values not found for {}".format(target_datetime))
                 errors.append(target_datetime)
                 continue
 
@@ -206,15 +206,15 @@ def main(granularity, start_date, end_date):
                 try:
                     cursor.execute(insert_str)
                 except:
-                    print insert_str
+                    print(insert_str)
                     pdb.set_trace()
             
-            print "At {0}, Number of rows considered in total: {1}".format(target_datetime, total_rows)
+            print("At {0}, Number of rows considered in total: {1}".format(target_datetime, total_rows))
             # commit
             db.commit()
 
-    print "No epoch count: {0} and Skip epoch counts {1}".format(no_epoch_count,skip_epoch_count)
-    print "dates with no complete fixed station data are {}".format(errors)
+    print("No epoch count: {0} and Skip epoch counts {1}".format(no_epoch_count,skip_epoch_count))
+    print("dates with no complete fixed station data are {}".format(errors))
 
     # after all the rows have been populated with the original co, 
     # we need to populate the normalised value, mean and std
@@ -222,7 +222,7 @@ def main(granularity, start_date, end_date):
         select_str = """ select * from {};""".format(data_table)
         df_mysql = data_from_db(select_str, verbose=True, exit_on_zero=False)
         if not df_mysql:
-            print "no rows in {}. Script completed".format(data_table)
+            print("no rows in {}. Script completed".format(data_table))
             return 
         co_mean, co_stddev = df_mysql['co_original'].mean(), df_mysql['co_original'].std(ddof=0)
         df_mysql['co_mean'] = co_mean
@@ -245,7 +245,7 @@ def main(granularity, start_date, end_date):
 
 
 if __name__ == "__main__":
-    print "Starting script"
+    print("Starting script")
     script_start_time = datetime.now()
     #start_date = datetime(2013,4,22)
     #end_date = datetime(2013,4,25)
@@ -274,6 +274,6 @@ if __name__ == "__main__":
     script_end_time = datetime.now()
     time_taken = script_end_time - script_start_time
 
-    print "Time taken is ", time_taken.seconds
-    print "Script finished!"
+    print("Time taken is ", time_taken.seconds)
+    print("Script finished!")
 

@@ -46,7 +46,7 @@ def main():
     sql_str = """select DATE_FORMAT(date,"%Y-%m-%d") as shortdate, Samples.* from Samples where user_id = 2 and (location_name="CHULLORA" or location_name="PROSPECT" or location_name="ROZELLE" or location_name="LIVERPOOL") and date between "{0}" and "{1}" and (DATE_FORMAT(date,"%H") = "00" or DATE_FORMAT(date,"%H") = "01") and co is not NULL  order by date desc;""".format(start_date, end_date)
     short_date_index = 0
     location_index = 7
-    print sql_str
+    print(sql_str)
     
     #column information for the table, not the query
     # date, latitude, longitude latitude   | longitude  | location_error | computed_location | location_name   | user_id | group_id | device_id | temperature | humidity | speed | co2  | co 
@@ -108,7 +108,7 @@ def main():
                         #skip because the row already exists
                         skip_rows += 1
                         if skip_rows %50 == 0:
-                            print "Skipped rows ", skip_rows
+                            print("Skipped rows ", skip_rows)
                         break;
             #go to the next location, but same date if the midnight value exists
             if midnight_exists:
@@ -120,7 +120,7 @@ def main():
             #data = list(list(rows)[0])
             #the case below is no 01:00:00 exists for the particular day, different to if a NULL exists for a co
             if data is None:
-                print "No 01:00:00 data for {0} at {1}".format(date,location)
+                print("No 01:00:00 data for {0} at {1}".format(date,location))
                 sys.exit()
 
             # replace None with ''
@@ -136,7 +136,7 @@ def main():
             input_data += [stringify(x) for x in data[3:7]]
             # location name
             input_data += ['"{0}"'.format(x) for x in data[7:8]]
-            print ['"{0}"'.format(x) for x in data[7:8]]
+            print(['"{0}"'.format(x) for x in data[7:8]])
             #store user id and group id
             input_data += ["{0}".format(x) for x in data[8:10]]
             #store the rest of the columns
@@ -158,15 +158,15 @@ def main():
         # commit
         db.commit()
         if total_rows %50 == 0 or skip_rows %50 ==0:
-            print "Rows inserted so far ", total_rows, ", Skip rows ", skip_rows
+            print("Rows inserted so far ", total_rows, ", Skip rows ", skip_rows)
 
-    print "Total rows inserted ", total_rows
-    print "Skipped rows ", skip_rows
+    print("Total rows inserted ", total_rows)
+    print("Skipped rows ", skip_rows)
 
     db.close()
         
 if __name__ == "__main__":
-        print "Starting script"
+        print("Starting script")
         # execute only if run as a script
         main()
-        print "Script finished!"
+        print("Script finished!")

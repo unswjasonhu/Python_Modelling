@@ -1,2 +1,5 @@
 test:
-	nosetests -v --all-modules /code/src/tests
+	nose2 -v
+coverage:
+	nose2 --with-coverage  --coverage-report html -vv
+

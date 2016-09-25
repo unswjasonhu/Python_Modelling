@@ -67,7 +67,7 @@ def get_estimates_value(cursor, day_to_closest, location):
                     vals.append([0.2])
                     continue
                 else:
-                    print "Problems with the script"
+                    print("Problems with the script")
                     sys.exit()
         estimate_values[k] = vals
     # print estimate_values
@@ -140,8 +140,8 @@ def main():
     # provide some buffer time (extra epoch)
     epochs = ((end_date - start_date).days * 24 + 1)
 
-    print "Start data and end date: {0} to {1}".format(start_date, end_date)
-    print "Number of hours of data: {0}".format(epochs)
+    print("Start data and end date: {0} to {1}".format(start_date, end_date))
+    print("Number of hours of data: {0}".format(epochs))
 
     first_date = start_date
 
@@ -163,7 +163,7 @@ def main():
 
         # skip to next hour if there's something in there
         if results[0] > 0:
-            print "Skipped entry for ", first_date
+            print("Skipped entry for ", first_date)
             first_date += timedelta(seconds=3600)
             continue
 
@@ -235,7 +235,7 @@ def main():
         db.commit()
 
         # print
-        print "Row total inserted is ", row_count, "populated at ", first_date, "Skip total", skip_count
+        print("Row total inserted is ", row_count, "populated at ", first_date, "Skip total", skip_count)
         first_date += timedelta(seconds=3600)
 
     # close the connection to the db
@@ -243,7 +243,7 @@ def main():
 
 
 if __name__ == "__main__":
-    print "Starting script"
+    print("Starting script")
     # execute only if run as a script
     main()
-    print "Script finished!"
+    print("Script finished!")

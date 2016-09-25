@@ -56,8 +56,8 @@ def main():
     #provide some buffer time (extra epoch)
     epochs =  ((end_date - start_date).days*24 + 1)
     
-    print "Start data and end date: {0} to {1}".format(start_date, end_date)
-    print "Number of hours of data: {0}".format(epochs)
+    print("Start data and end date: {0} to {1}".format(start_date, end_date))
+    print("Number of hours of data: {0}".format(epochs))
     
     first_date = start_date
     total_rows = 0
@@ -78,7 +78,7 @@ def main():
         cursor.execute(select_str)
         if cursor.rowcount == 0:
             skip_epoch_count += 1
-            print "Skipped {0} due to lack of sensor data".format(first_date)
+            print("Skipped {0} due to lack of sensor data".format(first_date))
             first_date += timedelta(seconds=3600)
             continue;
     
@@ -93,7 +93,7 @@ def main():
                             date asc """.format(first_date, NW_BOUND[0], SW_BOUND[0], NW_BOUND[1], NE_BOUND[1])
         df_mysql = data_from_db(select_str, verbose=True, exit_on_zero=False)
         if df_mysql is None:
-            print "No data returned for {0}".format(first_date)
+            print("No data returned for {0}".format(first_date))
             no_epoch_count += 1
             first_date += timedelta(seconds=3600)
             continue
@@ -104,7 +104,7 @@ def main():
         #discount grid if it doesn't have enough pixels (i.e. less than threshold)
         if non_zero_grid_count < non_zero_grid_count_threshold:
             skip_epoch_count += 1
-            print "Skipped {0} due to non zero grid count less than threshold".format(first_date)
+            print("Skipped {0} due to non zero grid count less than threshold".format(first_date))
             first_date += timedelta(seconds=3600)
             continue
 
@@ -144,22 +144,22 @@ def main():
             insert_str = """insert ignore into {0} () values ({1}); """.format(data_table, ','.join(data))
             cursor.execute(insert_str)
         
-        print "At {0}, Number of rows considered in total: {1}".format(first_date, total_rows)
+        print("At {0}, Number of rows considered in total: {1}".format(first_date, total_rows))
         # commit at each epoch, i.e. every 10000 rows
         db.commit()
         first_date += timedelta(seconds=3600)
 
     db.close()
-    print "No epoch count: {0} and Skip epoch counts {1}".format(no_epoch_count,skip_epoch_count)
+    print("No epoch count: {0} and Skip epoch counts {1}".format(no_epoch_count,skip_epoch_count))
 
 
 if __name__ == "__main__":
-        print "Starting script"
+        print("Starting script")
         start_time = datetime.now()
         # execute only if run as a script
         main()
         end_time = datetime.now()
         time_taken = end_time - start_time
-        print "Time taken is ", time_taken.seconds
-        print "Script finished!"
+        print("Time taken is ", time_taken.seconds)
+        print("Script finished!")
 
