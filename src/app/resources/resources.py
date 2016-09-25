@@ -363,11 +363,7 @@ def convert_to_localtime(series):
     return series
 
 
-def model_NN(time_start, time_end, name="time_vs_co_averages"):
-    """ Implement the NN model """
-    name = IMAGES_BASE_DIR + "/" + name
-    # retrieve sql data for the period required
-    user_id = 7
+def get_NN_model_data(time_start, time_end, user_id):
     sql_string = """
         SELECT
             user_id,
@@ -382,7 +378,15 @@ def model_NN(time_start, time_end, name="time_vs_co_averages"):
             DATE_FORMAT(date, '%Y-%m-%d %H:%i');
     """.format(time_start, time_end, user_id)
 
-    df_mysql = data_from_db(sql_string)
+    return data_from_db(sql_string)
+
+def model_NN(time_start, time_end, name="time_vs_co_averages"):
+    """ Implement the NN model """
+    name = IMAGES_BASE_DIR + "/" + name
+    # retrieve sql data for the period required
+    user_id = 7
+
+    df_mysql = get_NN_model_data(time_start, time_end, user_id)
 
     # plot the current data over the time period with a line and scatter to
     # get an idea of what it looks like

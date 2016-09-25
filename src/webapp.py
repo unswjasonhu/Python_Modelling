@@ -4,7 +4,7 @@ from flask import Flask
 from flask import render_template, request, jsonify
 import re
 import urllib
-import config
+from config import config
 
 import os
 import sys
@@ -94,16 +94,8 @@ def generate_plot():
 if __name__ == '__main__':
     app.debug = True
 
+    app.config.from_object(config)
     print('App variables are:', app.__dict__)
-    environment = os.environ['ENVIRONMENT'] or 'prod'
-
-    if environment == 'dev':
-        app.config.from_object(config.DevelopmentConfig)
-    elif environment == 'prod':
-        app.config.from_object(config.ProductionConfig)
-
-    print('App variables are:', app.__dict__)
-
     if app.debug:
         app.run(debug=True, host='0.0.0.0')
     else:
