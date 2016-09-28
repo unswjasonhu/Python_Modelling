@@ -74,29 +74,54 @@ syd_grid_lat_dist = syd_grid_left_dist
 
 
 def classify_hour(hour):
-    """ Classify the hour based on some aggregate ranges"""
-    if hour >= 8 and hour <= 11:
-        return 1
-    elif hour >= 12 and hour <= 15:
-        return 2
-    elif hour >= 16 and hour <= 19:
-        return 3
-    elif hour >= 20 and hour <= 23:
-        return 4
-    raise Exception("Hour out of bounds")
+    """Classify the hour based on some aggregate ranges.
+
+    Args:
+        hour: integer between 8-23
+
+    Returns:
+        aggregate range between 1-4
+
+    Raises:
+        ValueError
+    """
+    hour_range_to_class_map = {
+        (8, 11): 1,
+        (12, 15): 2,
+        (16, 19): 3,
+        (20, 23): 4,
+    }
+
+    for (lower, upper), classification in hour_range_to_class_map.items():
+        if hour >= lower and hour <= upper:
+            return classification
+
+    raise ValueError("Hour must be between 8 and 23")
 
 
-def get_season(user_datetime):
-    """ Gets the seasons, summer=0, autumn=1, etc """
-    user_month = user_datetime.month
-    if user_month == 12 or user_month <= 2:
-        return 0
-    elif user_month >= 3 and user_month <= 5:
-        return 1
-    elif user_month >= 6 and user_month <= 8:
-        return 2
-    elif user_month >= 9 and user_month <= 11:
-        return 3
+def get_season(month):
+    """Gets the season index given a month index.
+
+    Args:
+        month: integer from 1 - 12
+
+    Returns:
+        season from 0 - 3
+
+    Raises:
+        ValueError
+    """
+    month_to_season_map = {
+        (12, 1, 2): 0,
+        (3, 4, 5): 1,
+        (6, 7, 8): 2,
+        (9, 10, 11): 3
+    }
+    for month_range, season_idx in month_to_season_map.items():
+        if month in month_range:
+            return season_idx
+
+    raise ValueError("Month must be between 1 and 12")
 
 
 def find_coords_given_bearing(lat1, lon1, bearing, distance):
@@ -514,8 +539,17 @@ def predict_with_model(model_file_location,
         hour_feature = classify_hour(specific_hour)
 
         # Need the fixed station values
-        data = [fixed_samples_data['weekdays'].iloc[0], hour_feature, get_season(
-            input_datetime), 0, 0, co_liverpool, co_prospect, co_chullora, co_rozelle]
+        data = [
+            fixed_samples_data['weekdays'].iloc[0],
+            hour_feature,
+            get_season(input_datetime.month),
+            0,
+            0,
+            co_liverpool,
+            co_prospect,
+            co_chullora,
+            co_rozelle
+        ]
         X = np.float64([data])
         y_vals = []
 
@@ -535,8 +569,17 @@ def predict_with_model(model_file_location,
 
         for hour in range(8, 24):
             hour_feature = classify_hour(hour)
-            data = [fixed_samples_data['weekdays'].iloc[0], hour_feature, get_season(
-                input_date), row, col, co_liverpool, co_prospect, co_chullora, co_rozelle]
+            data = [
+                fixed_samples_data['weekdays'].iloc[0],
+                hour_feature,
+                get_season(input_date.month),
+                row,
+                col,
+                co_liverpool,
+                co_prospect,
+                co_chullora,
+                co_rozelle
+            ]
             X = np.float64([data])
             y_vals.append((hour, 5.7464 * pipeline.predict(X)[0] + 3.48652))
 
