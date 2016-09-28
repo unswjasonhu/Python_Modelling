@@ -4,13 +4,16 @@ ADD src /code
 
 WORKDIR /code
 
-RUN export PYTHONPATH=/code/src && echo "python path is" $PYTHONPATH
+ENV PYTHONPATH $PYTHONPATH;/code/src
 
-RUN apt-get update
-
-RUN apt-get install -y python3-dev libmysqlclient-dev python-matplotlib libmysqlclient-dev
-
-RUN pip install -r requirements/requirements.txt
+RUN apt-get update \
+&&  apt-get install -y \
+        python3-dev \
+        libmysqlclient-dev \
+        python-matplotlib \
+        libmysqlclient-dev \
+&&  pip install -r requirements/requirements.txt \
+&&  rm -rf /var/lib/apt/lists/*
 
 ENTRYPOINT ["python"]
 CMD ["src/webapp.py"]

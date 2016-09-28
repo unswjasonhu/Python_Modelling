@@ -3,6 +3,7 @@ from unittest import TestCase, mock
 from app.resources.resources import classify_hour
 from tests.utils import CustomTestCase
 
+
 class TestUtilsClass(TestCase):
 
     def test_classify_hour(self):
@@ -26,7 +27,7 @@ class TestModellingNNClass(CustomTestCase):
     @mock.patch('app.resources.resources.get_NN_model_data', rv=None)
     def test_model_NN(self, mocked):
         """  Mocking return values from database """
-        pass        
+        pass
 
 
 # runs the unit tests in the module
