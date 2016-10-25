@@ -6,11 +6,13 @@ import sys
 from datetime import datetime
 import numpy as np
 
-from os import path
-sys.path.append( path.dirname( path.dirname( path.abspath(__file__))))
+cmd_folder = '/code'
+if cmd_folder not in sys.path:
+    sys.path.insert(0, cmd_folder)
+from src.config import config
 
-from resources import data_from_db, gridify_sydney
-from resources import NW_BOUND,SW_BOUND,NE_BOUND, create_mean_value_grid, get_season
+from src.app.resources.resources import data_from_db, gridify_sydney
+from src.app.resources.resources import NW_BOUND,SW_BOUND,NE_BOUND, create_mean_value_grid, get_season
 
 import pdb
 
@@ -23,7 +25,7 @@ def get_time_periods_with_sensor_data(start_date, end_date, data_table, interval
     """ Get the time periods to populate data for """
     time_periods = []
 
-    db = MySQLdb.connect("localhost","pollution","pollution","pollution_monitoring" )
+    db = MySQLdb.connect(config.DATABASE_URI, config.DATABASE_USER, config.DATABASE_PASSWORD, config.DATABASE_NAME)
     cursor = db.cursor()
 
     # find the set of hours with sensor data
@@ -55,7 +57,7 @@ def main(granularity, start_date, end_date):
 
     SVM uses the known data, called SamplesGridData, training the model with this data
     and using the resultant model to infer unknown data points. There is no interpolation
-    in this method.. 
+    in this method..
 
     """
 
@@ -98,27 +100,27 @@ def main(granularity, start_date, end_date):
         for target_datetime in target_datetimes:
             target_datetime = datetime.strptime(target_datetime, '%Y-%m-%d %H:%M')
             #get data for an time period
-            select_str = """SELECT 
-                                date as datetime, DATE_FORMAT(date,"%Y-%m-%d") AS date, 
-                                DATE_FORMAT(date,"%H") as hour, 
-                                DATE_FORMAT(date,"%i") as minute, 
-                                if(WEEKDAY(date)<5, true, false) AS weekdays, 
-                                WEEKDAY(date) AS dayoftheweek, 
-                                latitude, longitude, user_id, co 
-                            FROM 
-                                Samples 
-                            WHERE 
-                                user_id != 2 AND date between "{0}" 
-                                AND DATE_ADD("{0}", INTERVAL {5} SECOND) 
-                                AND co is not null 
-                                and latitude is not null and longitude is not null 
-                                AND (latitude <= {1} AND latitude >= {2}) 
-                                AND (longitude >= {3} AND longitude <= {4}) 
+            select_str = """SELECT
+                                date as datetime, DATE_FORMAT(date,"%Y-%m-%d") AS date,
+                                DATE_FORMAT(date,"%H") as hour,
+                                DATE_FORMAT(date,"%i") as minute,
+                                if(WEEKDAY(date)<5, true, false) AS weekdays,
+                                WEEKDAY(date) AS dayoftheweek,
+                                latitude, longitude, user_id, co
+                            FROM
+                                Samples
+                            WHERE
+                                user_id != 2 AND date between "{0}"
+                                AND DATE_ADD("{0}", INTERVAL {5} SECOND)
+                                AND co is not null
+                                and latitude is not null and longitude is not null
+                                AND (latitude <= {1} AND latitude >= {2})
+                                AND (longitude >= {3} AND longitude <= {4})
                                 AND co > 0 AND co < 60
                             ORDER BY
                                 date asc """.format(
-                                    target_datetime, 
-                                    NW_BOUND[0], SW_BOUND[0], NW_BOUND[1], NE_BOUND[1], 
+                                    target_datetime,
+                                    NW_BOUND[0], SW_BOUND[0], NW_BOUND[1], NE_BOUND[1],
                                     interval_period
                                 )
 
@@ -139,7 +141,7 @@ def main(granularity, start_date, end_date):
 
             #interpolate to get a grid
             known, z, ask, _ = gridify_sydney(df_mysql, verbose=False, heatmap=False)
-            
+
             if len(known) == 0:
                 raise Exception("No data for {0}".format(target_datetime))
                 sys.exit()
@@ -192,23 +194,23 @@ def main(granularity, start_date, end_date):
                 grid_location_row, grid_location_col = known[i]
                 data = data_common + \
                         ["{0}".format(x) for x in [grid_location_row, grid_location_col, co_chullora, co_liverpool, co_prospect, co_rozelle, z[i]]]
-                
+
                 insert_str = """
-                                 insert ignore into {0} 
-                                     (datetime, date, hour, minute, weekdays, 
-                                     dayoftheweek, season, 
-                                     grid_location_row, 
-                                     grid_location_col, 
-                                     co_chullora, co_liverpool, co_prospect, co_rozelle, co_original) 
-                                 values 
-                                     ({1}); 
+                                 insert ignore into {0}
+                                     (datetime, date, hour, minute, weekdays,
+                                     dayoftheweek, season,
+                                     grid_location_row,
+                                     grid_location_col,
+                                     co_chullora, co_liverpool, co_prospect, co_rozelle, co_original)
+                                 values
+                                     ({1});
                              """.format(data_table, ','.join(data))
                 try:
                     cursor.execute(insert_str)
                 except:
                     print(insert_str)
                     pdb.set_trace()
-            
+
             print("At {0}, Number of rows considered in total: {1}".format(target_datetime, total_rows))
             # commit
             db.commit()
@@ -216,14 +218,14 @@ def main(granularity, start_date, end_date):
     print("No epoch count: {0} and Skip epoch counts {1}".format(no_epoch_count,skip_epoch_count))
     print("dates with no complete fixed station data are {}".format(errors))
 
-    # after all the rows have been populated with the original co, 
+    # after all the rows have been populated with the original co,
     # we need to populate the normalised value, mean and std
     if populate_second_pass:
         select_str = """ select * from {};""".format(data_table)
         df_mysql = data_from_db(select_str, verbose=True, exit_on_zero=False)
         if not df_mysql:
             print("no rows in {}. Script completed".format(data_table))
-            return 
+            return
         co_mean, co_stddev = df_mysql['co_original'].mean(), df_mysql['co_original'].std(ddof=0)
         df_mysql['co_mean'] = co_mean
         df_mysql['co_stddev'] = co_stddev
@@ -231,11 +233,11 @@ def main(granularity, start_date, end_date):
 
         for index, row in df_mysql.iterrows():
             update_sql = """
-            UPDATE 
-                {0} 
-            SET 
-                co={1}, co_mean={2}, co_stddev={3} 
-            WHERE 
+            UPDATE
+                {0}
+            SET
+                co={1}, co_mean={2}, co_stddev={3}
+            WHERE
                 datetime='{4}' AND grid_location_row={5} AND grid_location_col={6}
             """.format(data_table, row['co'], row['co_mean'], row['co_stddev'], row['datetime'], row['grid_location_row'], row['grid_location_col'])
             cursor.execute(update_sql)
@@ -276,4 +278,3 @@ if __name__ == "__main__":
 
     print("Time taken is ", time_taken.seconds)
     print("Script finished!")
-

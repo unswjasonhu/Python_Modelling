@@ -7,18 +7,21 @@ from datetime import timedelta
 import pprint
 
 pp = pprint.PrettyPrinter(indent=4)
-#from resources import get_flattened_index
+
+cmd_folder = '/code'
+if cmd_folder not in sys.path:
+    sys.path.insert(0, cmd_folder)
+from src.config import config
+
 
 
 def main():
     """
     This script is a fix to populate hours where there is no midnight co value.
     The script essentially fixes a bug with the Samples table population.
-
-
     """
     # Open database connection
-    db = MySQLdb.connect("localhost","pollution","pollution","pollution_monitoring" )
+    db = MySQLdb.connect(config.DATABASE_URI, config.DATABASE_USER, config.DATABASE_PASSWORD, config.DATABASE_NAME)
 
     # prepare a cursor object using cursor() method
     cursor = db.cursor()
@@ -47,9 +50,9 @@ def main():
     short_date_index = 0
     location_index = 7
     print(sql_str)
-    
+
     #column information for the table, not the query
-    # date, latitude, longitude latitude   | longitude  | location_error | computed_location | location_name   | user_id | group_id | device_id | temperature | humidity | speed | co2  | co 
+    # date, latitude, longitude latitude   | longitude  | location_error | computed_location | location_name   | user_id | group_id | device_id | temperature | humidity | speed | co2  | co
     columns = ["date","latitude",  "longitude", "location_error", "computed_location", "location_name", "user_id", "group_id", "device_id", "temperature", "humidity", "speed", "co2", "co"]
     columns_str = ','.join(columns)
     # end date
@@ -164,7 +167,7 @@ def main():
     print("Skipped rows ", skip_rows)
 
     db.close()
-        
+
 if __name__ == "__main__":
         print("Starting script")
         # execute only if run as a script

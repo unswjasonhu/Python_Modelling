@@ -21,7 +21,7 @@ class TestConfig(Config):
     DATABASE_NAME='test_pollution_monitoring'
 
 
-def get_config(environment='prod'):
+def get_config(environment='dev'):
     if not environment:
         environment = os.environ['ENVIRONMENT']
 

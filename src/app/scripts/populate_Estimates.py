@@ -1,21 +1,26 @@
 #! /usr/bin/python
 from __future__ import division
 
-
 import MySQLdb
-import sys
+import sys, os, inspect
 from datetime import timedelta, datetime
 import numpy as np
 
-from ..resources import data_from_db, gridify_sydney, idw_interpol
-from ..resources import NW_BOUND,SW_BOUND,NE_BOUND, create_mean_value_grid, get_season
+# Add folder to path
+cmd_folder = '/code'
+if cmd_folder not in sys.path:
+    sys.path.insert(0, cmd_folder)
+from src.config import config
+
+from src.app.resources.resources import data_from_db, gridify_sydney, idw_interpol
+from src.app.resources.resources import NW_BOUND,SW_BOUND,NE_BOUND, create_mean_value_grid, get_season
 
 import pdb
 
 def main():
     """
 
-    Populating the Estimates was an initial method used by NN, then by SVM. Here, 
+    Populating the Estimates was an initial method used by NN, then by SVM. Here,
     Interpolation was used to calculate values for all the grids. This data was then
     fed into the model to train.
 
@@ -25,7 +30,8 @@ def main():
     """
 
     # Open database connection
-    db = MySQLdb.connect("localhost","pollution","pollution","pollution_monitoring" )
+    db = MySQLdb.connect(config.DATABASE_URI, config.DATABASE_USER, config.DATABASE_PASSWORD, config.DATABASE_NAME)
+
 
     # prepare a cursor object using cursor() method
     cursor = db.cursor()
@@ -42,7 +48,7 @@ def main():
     # end date
     #cursor.execute(sql_str)
     #end_date = cursor.fetchone()[0]
-    #override 
+    #override
     end_date = datetime(2015,11,1)
 
     #Choose the data table to use
@@ -55,16 +61,16 @@ def main():
     #epochs are the time periods to iterate over
     #provide some buffer time (extra epoch)
     epochs =  ((end_date - start_date).days*24 + 1)
-    
+
     print("Start data and end date: {0} to {1}".format(start_date, end_date))
     print("Number of hours of data: {0}".format(epochs))
-    
+
     first_date = start_date
     total_rows = 0
     no_epoch_count = 0
     skip_epoch_count = 0
 
-    for _ in xrange(epochs):
+    for _ in range(epochs):
         #do a quick check to see if data for a datetime exists, skip if it does
         sql_str = """ select datetime from {0} where datetime="{1}" limit 1;""".format(data_table, first_date)
         cursor.execute(sql_str)
@@ -81,13 +87,13 @@ def main():
             print("Skipped {0} due to lack of sensor data".format(first_date))
             first_date += timedelta(seconds=3600)
             continue;
-    
+
         #get data for an hour
-        select_str = """SELECT 
-                            date as datetime, DATE_FORMAT(date,"%Y-%m-%d") AS date, DATE_FORMAT(date,"%H") as time, if(WEEKDAY(date)<5, true, false) AS weekdays, WEEKDAY(date) AS dayoftheweek, latitude, longitude, user_id, co 
-                        FROM 
-                            Samples 
-                        WHERE 
+        select_str = """SELECT
+                            date as datetime, DATE_FORMAT(date,"%Y-%m-%d") AS date, DATE_FORMAT(date,"%H") as time, if(WEEKDAY(date)<5, true, false) AS weekdays, WEEKDAY(date) AS dayoftheweek, latitude, longitude, user_id, co
+                        FROM
+                            Samples
+                        WHERE
                             user_id != 2 and date between "{0}" and date_add("{0}", interval 1 hour) and co is not null and latitude is not null and longitude is not null AND (latitude <= {1} AND latitude >= {2}) AND (longitude >= {3} AND longitude <= {4}) AND co > 0 AND co < 60
                         ORDER BY
                             date asc """.format(first_date, NW_BOUND[0], SW_BOUND[0], NW_BOUND[1], NE_BOUND[1])
@@ -110,7 +116,7 @@ def main():
 
         #interpolate to get a grid
         known, z, ask, _ = gridify_sydney(df_mysql, verbose=False, heatmap=False)
-        
+
         if len(known) == 0:
             raise Exception("No data for {0}".format(first_date))
             sys.exit()
@@ -143,7 +149,7 @@ def main():
             #print data
             insert_str = """insert ignore into {0} () values ({1}); """.format(data_table, ','.join(data))
             cursor.execute(insert_str)
-        
+
         print("At {0}, Number of rows considered in total: {1}".format(first_date, total_rows))
         # commit at each epoch, i.e. every 10000 rows
         db.commit()
@@ -162,4 +168,3 @@ if __name__ == "__main__":
         time_taken = end_time - start_time
         print("Time taken is ", time_taken.seconds)
         print("Script finished!")
-

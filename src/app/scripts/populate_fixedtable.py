@@ -1,15 +1,21 @@
 #! /usr/bin/python
 
 import MySQLdb
-import sys
+import sys, os
 from datetime import timedelta, datetime
 
-from ..resources import get_flattened_index
+# Add folder to path
+cmd_folder = '/code'
+if cmd_folder not in sys.path:
+    sys.path.insert(0, cmd_folder)
+from src.config import config
+
+from src.app.resources.resources import get_flattened_index
 
 
 def main():
     # Open database connection
-    db = MySQLdb.connect("localhost","pollution","pollution","pollution_monitoring" )
+    db = MySQLdb.connect(config.DATABASE_URI, config.DATABASE_USER, config.DATABASE_PASSWORD, config.DATABASE_NAME)
 
     # prepare a cursor object using cursor() method
     cursor = db.cursor()
@@ -26,7 +32,7 @@ def main():
 
     # get the newest date
     sql_str = """select distinct date from Samples  where user_id = 2 order by date desc limit 1;"""
-    
+
     # end date
     cursor.execute(sql_str)
     end_date = cursor.fetchone()[0]
@@ -39,10 +45,10 @@ def main():
     first_date = start_date
     # for each week
     total_rows = 0
-    for _ in xrange(epochs):
+    for _ in range(epochs):
         #get the aggregated values for use later
         agg_str = """select date, avg(co) from Samples where user_id = 2 and (location_name="CHULLORA" or location_name="PROSPECT" or location_name="ROZELLE" or location_name="LIVERPOOL") and date between "{0}" and date_add("{0}", interval 7 day) and co is not null and latitude is not null and longitude is not null group by date order by date asc;""".format(first_date)
-        
+
         cursor.execute(agg_str)
         agg_results = cursor.fetchall()
         agg_results = dict(agg_results)
@@ -61,16 +67,16 @@ def main():
                 print("Skipped {0} due to lack of sensor data".format(input_datetime))
                 continue;
             agg_for_date = agg_results[input_datetime]
-            data = ['"{0}"'.format(result[x]) for x in xrange(2)] + [result[x] for x in xrange(2,5)] + [get_flattened_index(float(result[5]), float(result[6]))] + ['"{0}"'.format(result[7])] + [result[8] , agg_for_date]
+            data = ['"{0}"'.format(result[x]) for x in range(2)] + [result[x] for x in range(2,5)] + [get_flattened_index(float(result[5]), float(result[6]))] + ['"{0}"'.format(result[7])] + [result[8] , agg_for_date]
             data = ['{0}'.format(x) for x in data]
             # input data into sql
             insert_str = """insert ignore into FixedSamples () values ({0}); """.format(','.join(data))
             cursor.execute(insert_str)
         # commit
         db.commit()
-        first_date = first_date + timedelta(days=7) 
+        first_date = first_date + timedelta(days=7)
     db.close()
-        
+
 if __name__ == "__main__":
         print("Starting script")
         # execute only if run as a script

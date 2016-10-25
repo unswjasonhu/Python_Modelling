@@ -11,10 +11,18 @@ from sklearn.cross_validation import train_test_split
 from sklearn import preprocessing
 from sklearn.grid_search import GridSearchCV
 from sklearn.metrics import mean_absolute_error
-from resources import data_from_db, create_mesh, classify_hour
-from resources import NW_BOUND, SW_BOUND, NE_BOUND, create_mean_value_grid
 import pickle
 from datetime import datetime
+
+cmd_folder = '/code'
+if cmd_folder not in sys.path:
+    sys.path.insert(0, cmd_folder)
+from src.config import config
+
+
+from src.app.resources.resources import data_from_db, create_mesh, classify_hour
+from src.app.resources.resources import NW_BOUND, SW_BOUND, NE_BOUND, create_mean_value_grid
+
 
 # do you want to do zero mean analysis and get the mean and std per hour?
 run_zero_mean_analysis = False

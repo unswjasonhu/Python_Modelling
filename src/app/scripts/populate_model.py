@@ -2,7 +2,13 @@
 
 from __future__ import division
 import MySQLdb
-from ..resources import *
+
+cmd_folder = '/code'
+if cmd_folder not in sys.path:
+    sys.path.insert(0, cmd_folder)
+from src.config import config
+
+from src.app.resources.resources import *
 from datetime import datetime, timedelta
 import numpy as np
 import pprint
@@ -30,14 +36,14 @@ def step4and5(cursor, dayoftheweek, hour, short_date, avg_co):
 
     # Step 5 - find the 2 closest values to Step 3
     if len(results) == 0:
-        n_closest = [None for x in xrange(N)]
+        n_closest = [None for x in range(N)]
     elif len(results) == 1:
-        n_closest = [results[x] for x in xrange(len(results))]
+        n_closest = [results[x] for x in range(len(results))]
         n_closest += [None]
-        #n_closest = [results[x] for x in xrange(N)]
+        #n_closest = [results[x] for x in range(N)]
     else:
-        n_closest = [results[x] for x in xrange(N)]
-    # for x in xrange(n):
+        n_closest = [results[x] for x in range(N)]
+    # for x in range(n):
     #    print dayoftheweek, n_closest[x]
     # return closest values, excluding query date
     return (True, n_closest)
@@ -86,7 +92,7 @@ def populate_model_table(cursor, input_datetime, grid_location, day_to_co, co):
     # for k, v in day_to_co.items():
     # populate the right sql model table
     data = ["'{0}'".format(input_datetime), "{0}".format(grid_location)]
-    feature_data = list(np.array([[day_to_co[k][i] for i in xrange(
+    feature_data = list(np.array([[day_to_co[k][i] for i in range(
         len(day_to_co[k]))] for k in sorted(day_to_co.keys())]).flatten())
     feature_data = ["{0}".format(x) for x in feature_data]
     data += feature_data
@@ -105,7 +111,7 @@ def main():
     """
 
     # Step 3 - Get the output from the fixed table
-    db = MySQLdb.connect("localhost", "pollution", "pollution", "pollution_monitoring")
+    db = MySQLdb.connect(config.DATABASE_URI, config.DATABASE_USER, config.DATABASE_PASSWORD, config.DATABASE_NAME)
 
     # prepare a cursor object using cursor() method
     cursor = db.cursor()
@@ -147,7 +153,7 @@ def main():
 
     row_count = 0
 
-    for _ in xrange(epochs):
+    for _ in range(epochs):
         # get the day of the week
         dayoftheweek = first_date.weekday()
 

@@ -4,7 +4,12 @@ import pickle
 from datetime import datetime,timedelta
 
 import numpy as np
-from ..resources import data_from_db, classify_hour, get_season
+
+cmd_folder = '/code'
+if cmd_folder not in sys.path:
+    sys.path.insert(0, cmd_folder)
+from src.config import config
+from src.app.resources.resources import data_from_db, classify_hour, get_season
 
 import pdb
 
@@ -15,7 +20,7 @@ svm_estimates_table = "SVMEstimates"
 
 def main():
     # Open database connection
-    db = MySQLdb.connect("localhost","pollution","pollution","pollution_monitoring" )
+    db = MySQLdb.connect(config.DATABASE_URI, config.DATABASE_USER, config.DATABASE_PASSWORD, config.DATABASE_NAME)
     # prepare a cursor object using cursor() method
     cursor = db.cursor()
 
@@ -42,7 +47,7 @@ def main():
     sql_string = """select distinct datetime from {0}; """.format(svm_estimates_table)
     cursor.execute(sql_string)
     inserted_datetimes = cursor.fetchall()
-    
+
     total_hours = (end_date - start_date).days*24
     total_datetimes = {start_date + timedelta(seconds=i*3600) for i in xrange(total_hours)}
 
@@ -55,15 +60,15 @@ def main():
             continue
 
         #get data for model input
-        sql_string = """select 
-            date, location_name, if(WEEKDAY(date)<5, true, false) AS weekdays, 
-            WEEKDAY(date) AS dayoftheweek, co  
-        from 
+        sql_string = """select
+            date, location_name, if(WEEKDAY(date)<5, true, false) AS weekdays,
+            WEEKDAY(date) AS dayoftheweek, co
+        from
             Samples
-        where 
-            user_id=2 and date="{0}" and 
-            (location_name="Prospect" or location_name="Rozelle" or location_name="Liverpool" or location_name="Chullora") 
-        order by 
+        where
+            user_id=2 and date="{0}" and
+            (location_name="Prospect" or location_name="Rozelle" or location_name="Liverpool" or location_name="Chullora")
+        order by
             location_name;""".format(start_date)
 
         fixed_samples_data = data_from_db(sql_string, exit_on_zero=False)
@@ -109,7 +114,7 @@ def main():
         #go through 100x100 grid pixels
         for i in xrange(100):
             for j in xrange(100):
-                X[0][3] = i 
+                X[0][3] = i
                 X[0][4] = j
                 y_val = pipeline.predict(X)[0]
 

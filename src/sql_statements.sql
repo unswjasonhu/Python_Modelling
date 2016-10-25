@@ -1,4 +1,28 @@
 /* Make the Samples run faster */
+CREATE TABLE IF NOT EXISTS Samples (
+id int(11) NOT NULL AUTO_INCREMENT,
+date datetime DEFAULT NULL,
+latitude decimal(9,6) DEFAULT NULL,
+longitude decimal(9,6) DEFAULT NULL,
+location_error decimal(9,6) NOT NULL DEFAULT '0.000000',
+computed_location tinyint(1) NOT NULL DEFAULT '0',
+location_name varchar(64) DEFAULT NULL,
+user_id int(11) NOT NULL DEFAULT '0',
+group_id int(11) NOT NULL DEFAULT '0',
+device_id int(11) DEFAULT NULL,
+temperature decimal(3,1) DEFAULT NULL,
+humidity decimal(5,2) DEFAULT NULL,
+speed decimal(5,2) DEFAULT NULL,
+co2 decimal(10,5) DEFAULT NULL,
+co decimal(10,5) DEFAULT NULL,
+pm10 decimal(8,4) DEFAULT NULL,
+`pm2.5` decimal(8,4) DEFAULT NULL,
+no decimal(10,5) DEFAULT NULL,
+no2 decimal(10,5) DEFAULT NULL,
+so2 decimal(10,5) DEFAULT NULL,
+o3 decimal(10,5) DEFAULT NULL,
+PRIMARY KEY (id)
+);
 CREATE INDEX user_Samples ON Samples (user_id);
 
 /* To store fixed Sample data */

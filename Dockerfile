@@ -8,7 +8,7 @@ RUN export PYTHONPATH=/code/src && echo "python path is" $PYTHONPATH
 
 RUN apt-get update
 
-RUN apt-get install -y python3-dev libmysqlclient-dev python-matplotlib libmysqlclient-dev
+RUN apt-get install -y python3-dev libmysqlclient-dev python-matplotlib libmysqlclient-dev mysql-client
 
 RUN pip install -r requirements/requirements.txt
 

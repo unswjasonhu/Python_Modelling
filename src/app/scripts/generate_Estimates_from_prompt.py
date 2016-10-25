@@ -5,9 +5,15 @@ from datetime import datetime
 import time
 
 import numpy as np
-from resources import data_from_db, classify_hour, get_season
+from src.app.resources import data_from_db, classify_hour, get_season
 
-import sys
+import sys, os
+
+# Add folder to path
+cmd_folder = '/code'
+if cmd_folder not in sys.path:
+    sys.path.insert(0, cmd_folder)
+from src.config import config
 
 use_hour_simplification_feature = True
 svm_estimates_table = "SVMEstimates"
@@ -74,13 +80,13 @@ def main():
     print("date,hour,weekdays,dayoftheweek,season,grid_row,grid_col,co_liverpool,co_prospect,co_chullora,co_rozelle,co")
 
     #go through 100x100 grid pixels
-    for i in xrange(100):
-        for j in xrange(100):
+    for i in range(100):
+        for j in range(100):
             X[0][3] = i
             X[0][4] = j
             y_val = pipeline.predict(X)[0]
 
-            insert_data = ['"{0}"'.format(start_date), '"{0}"'.format(start_date.date()), start_date.hour, fixed_samples_data['weekdays'].iloc[0], 
+            insert_data = ['"{0}"'.format(start_date), '"{0}"'.format(start_date.date()), start_date.hour, fixed_samples_data['weekdays'].iloc[0],
                     fixed_samples_data['dayoftheweek'].iloc[0], get_season(start_date), i, j, co_liverpool, co_prospect, co_chullora, co_rozelle, 5.7464*y_val[0]+3.48652]
 
             print(','.join([ str(x) for x in insert_data]))
